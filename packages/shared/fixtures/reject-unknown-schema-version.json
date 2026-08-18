@@ -1,0 +1,12 @@
+{
+  "payload_schema_version": "99.0",
+  "provider": "github",
+  "repo_id": "your-org/project-1",
+  "project": "project-1",
+  "week": "2026-W34",
+  "base_branch": "develop",
+  "commit_sha": "a1b2c3d",
+  "generated_at": "2026-08-18T09:00:00+08:00",
+  "timezone": "Asia/Manila",
+  "features": []
+}

@@ -1,0 +1,24 @@
+{
+  "payload_schema_version": "1.0",
+  "provider": "github",
+  "repo_id": "your-org/project-1",
+  "project": "project-1",
+  "week": "2026-W34",
+  "base_branch": "develop",
+  "commit_sha": "a1b2c3d",
+  "generated_at": "2026-08-18T09:00:00+08:00",
+  "timezone": "Asia/Manila",
+  "features": [
+    {
+      "feature_id": "auth-refresh",
+      "title": "Refresh token rotation",
+      "prd_ref": "docs/PRD.md#4.2",
+      "status": "wontfix",
+      "owners": ["dev-a"],
+      "estimate_hours": 8,
+      "hours_logged": 5.5,
+      "todos": [],
+      "open_prs": []
+    }
+  ]
+}
