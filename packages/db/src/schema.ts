@@ -1,0 +1,205 @@
+import {
+  boolean,
+  date,
+  doublePrecision,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+/**
+ * Raw tier (TECHSTACK.md §4.2). One row per feature ever, keyed on
+ * `provider + repo_id + feature_id` (TECHSTACK.md §6 rules) — a later push
+ * overwrites this row, it never forks a new row per week. `content_hash` is
+ * what the reconcile job (PRD.md §6.3) compares against a fresh pull to skip
+ * writes when nothing changed.
+ */
+export const snapshots = pgTable(
+  "snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    repoId: text("repo_id").notNull(),
+    project: text("project").notNull(),
+    featureId: text("feature_id").notNull(),
+    payloadSchemaVersion: text("payload_schema_version").notNull(),
+    week: text("week").notNull(),
+    baseBranch: text("base_branch").notNull(),
+    commitSha: text("commit_sha").notNull(),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull(),
+    timezone: text("timezone").notNull(),
+    raw: jsonb("raw").notNull(),
+    contentHash: text("content_hash").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("snapshots_provider_repo_feature_key").on(
+      table.provider,
+      table.repoId,
+      table.featureId,
+    ),
+  ],
+);
+
+/** Normalized tier — derived deterministically from `snapshots`, never
+ * written to directly by ingest (TECHSTACK.md §4.2). */
+export const projects = pgTable(
+  "projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    repoId: text("repo_id").notNull(),
+    name: text("name").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("projects_provider_repo_key").on(table.provider, table.repoId),
+  ],
+);
+
+export const features = pgTable(
+  "features",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    featureId: text("feature_id").notNull(),
+    title: text("title").notNull(),
+    prdRef: text("prd_ref").notNull(),
+    status: text("status").notNull(),
+    estimateHours: doublePrecision("estimate_hours").notNull(),
+    hoursLogged: doublePrecision("hours_logged").notNull(),
+    openPrs: jsonb("open_prs").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("features_project_feature_key").on(
+      table.projectId,
+      table.featureId,
+    ),
+  ],
+);
+
+export const assignees = pgTable(
+  "assignees",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    handle: text("handle").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [unique("assignees_handle_key").on(table.handle)],
+);
+
+/** Many-to-many: a feature's `owners[]`. */
+export const featureAssignees = pgTable(
+  "feature_assignees",
+  {
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    assigneeId: uuid("assignee_id")
+      .notNull()
+      .references(() => assignees.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    unique("feature_assignees_key").on(table.featureId, table.assigneeId),
+  ],
+);
+
+export const todos = pgTable(
+  "todos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    todoId: text("todo_id").notNull(),
+    title: text("title").notNull(),
+    done: boolean("done").notNull(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => assignees.id),
+    estimateHours: doublePrecision("estimate_hours").notNull(),
+    due: date("due"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("todos_feature_todo_key").on(table.featureId, table.todoId),
+  ],
+);
+
+/** Append-only history, one point per feature per week — the trend series
+ * behind the estimation-drift report (PRD.md §6.5). */
+export const estimates = pgTable(
+  "estimates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    week: text("week").notNull(),
+    estimateHours: doublePrecision("estimate_hours").notNull(),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("estimates_feature_week_key").on(table.featureId, table.week),
+  ],
+);
+
+export const actuals = pgTable(
+  "actuals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    week: text("week").notNull(),
+    hoursLogged: doublePrecision("hours_logged").notNull(),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("actuals_feature_week_key").on(table.featureId, table.week),
+  ],
+);
+
+export const statusEvents = pgTable(
+  "status_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "cascade" }),
+    week: text("week").notNull(),
+    status: text("status").notNull(),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("status_events_feature_week_key").on(table.featureId, table.week),
+  ],
+);
