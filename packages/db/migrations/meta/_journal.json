@@ -8,6 +8,13 @@
       "when": 1787037894253,
       "tag": "0000_busy_spot",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787039053724,
+      "tag": "0001_nasty_stardust",
+      "breakpoints": true
     }
   ]
 }

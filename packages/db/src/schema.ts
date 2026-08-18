@@ -203,3 +203,56 @@ export const statusEvents = pgTable(
     unique("status_events_feature_week_key").on(table.featureId, table.week),
   ],
 );
+
+/**
+ * Per-repo HMAC secret used to verify ingest requests (TECHSTACK.md §7).
+ * Deliberately its own table, not part of onboarding/OAuth: the ingest path
+ * only ever reads a secret by `provider + repo_id`, so it shares no
+ * dependencies with the onboarding flow that will eventually manage these.
+ */
+export const repoSecrets = pgTable(
+  "repo_secrets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    repoId: text("repo_id").notNull(),
+    secret: text("secret").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("repo_secrets_provider_repo_key").on(table.provider, table.repoId),
+  ],
+);
+
+/**
+ * Seen nonces for replay protection (TECHSTACK.md §7). A unique constraint
+ * on `provider + repo_id + nonce` makes "have we seen this before" an
+ * atomic insert rather than a check-then-write race.
+ */
+export const ingestNonces = pgTable(
+  "ingest_nonces",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    repoId: text("repo_id").notNull(),
+    nonce: text("nonce").notNull(),
+    requestTimestamp: timestamp("request_timestamp", {
+      withTimezone: true,
+    }).notNull(),
+    seenAt: timestamp("seen_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("ingest_nonces_provider_repo_nonce_key").on(
+      table.provider,
+      table.repoId,
+      table.nonce,
+    ),
+  ],
+);
