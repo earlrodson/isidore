@@ -1,0 +1,16 @@
+# Example CI config for a project repo onboarded to Isidore.
+# Copy into that repo as .github/workflows/isidore-push.yml.
+name: Isidore push snapshot
+on:
+  push:
+    branches: [develop]
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx --package=@isidore/worker isidore-worker-ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISIDORE_INGEST_ENDPOINT: ${{ vars.ISIDORE_INGEST_ENDPOINT }}
+          ISIDORE_HMAC_SECRET: ${{ secrets.ISIDORE_HMAC_SECRET }}

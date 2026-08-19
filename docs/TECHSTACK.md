@@ -56,10 +56,17 @@ on:
 
 | Case | Command |
 |---|---|
+| Scaffold `docs/features/` in a newly onboarded repo | `isi init` |
 | Backfill history on a newly onboarded repo | `isi push --week 2026-W30` |
 | Force re-send after CI outage or parser fix | `isi push --repo project-1 --week current` |
 | Preview payload before it goes live | `isi push --dry-run` |
 | Snapshot a long-lived feature branch early | `isi push --branch feature/x` |
+
+`isi init` copies the canonical `GUIDELINES.md` + `TEMPLATE-*.md` files bundled
+in the `isidore-worker` package into `docs/features/`, byte-identical to the
+bundled copies, plus a `.isidore-templates.json` checksum manifest for a
+future `isi init --update` to detect drift. Refuses to overwrite an existing
+`docs/features/GUIDELINES.md` unless `--force` is passed.
 
 Both triggers are safe to run concurrently because ingest is idempotent (keyed on `provider + repo_id + feature_id`) — a manual push and an automatic CI push simply overwrite the same row. The ingest endpoint has no notion of which trigger fired; that's what makes adding a second trigger free.
 
