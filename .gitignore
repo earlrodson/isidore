@@ -8,3 +8,5 @@ dist/
 .DS_Store
 coverage/
 *.tsbuildinfo
+.claude/vectors.db
+.claude/snapshot.json

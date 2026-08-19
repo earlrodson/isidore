@@ -9,7 +9,11 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "index": "bun tools/vector-index.ts",
+    "index:hook": "bun tools/vector-index.ts --install-hook",
+    "search": "bun tools/vector-search.ts",
+    "snapshot": "bun tools/snapshot.ts"
   },
   "devDependencies": {
     "typescript": "^5.6.0"
