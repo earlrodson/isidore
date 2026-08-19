@@ -4,7 +4,13 @@ import { sql } from "drizzle-orm";
 import { parseIngestPayload } from "@isidore/shared";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createDb, type Db } from "../client.js";
-import { getProjectDetail, listProjectSummaries } from "../queries.js";
+import {
+  getProjectDetail,
+  listDeveloperAllocation,
+  listEstimationDrift,
+  listFeaturesCompletedPerWeek,
+  listProjectSummaries,
+} from "../queries.js";
 import * as schema from "../schema.js";
 import { writeFeatureSnapshot } from "../write.js";
 
@@ -115,5 +121,130 @@ describe("getProjectDetail", () => {
       done: true,
       owner: "dev-a",
     });
+  });
+});
+
+describe("listFeaturesCompletedPerWeek", () => {
+  it("counts a feature once, in the week it first flips to done", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(db, { ...payload, week: "2026-W33", generated_at: "2026-08-11T09:00:00Z" }, feature);
+
+    const doneFeature = { ...feature, status: "done" as const };
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W34", generated_at: "2026-08-18T09:00:00Z" },
+      doneFeature,
+    );
+
+    // Reopened and redone the following week — must not recount.
+    const reopenedFeature = { ...feature, status: "in-progress" as const };
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W35", generated_at: "2026-08-25T09:00:00Z" },
+      reopenedFeature,
+    );
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W36", generated_at: "2026-09-01T09:00:00Z" },
+      doneFeature,
+    );
+
+    const result = await listFeaturesCompletedPerWeek(db);
+
+    expect(result).toEqual([
+      { provider: "github", repoId: "your-org/project-1", week: "2026-W34", count: 1 },
+    ]);
+  });
+
+  it("scopes by provider and repoId", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const doneFeature = { ...payload.features[0], status: "done" as const };
+    await writeFeatureSnapshot(db, payload, doneFeature);
+
+    const otherPayload = { ...payload, repo_id: "your-org/project-2", project: "project-2" };
+    await writeFeatureSnapshot(db, otherPayload, doneFeature);
+
+    const scoped = await listFeaturesCompletedPerWeek(db, {
+      provider: "github",
+      repoId: "your-org/project-2",
+    });
+
+    expect(scoped).toEqual([
+      { provider: "github", repoId: "your-org/project-2", week: payload.week, count: 1 },
+    ]);
+  });
+});
+
+describe("listEstimationDrift", () => {
+  it("trends estimate vs actual per week", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W33", generated_at: "2026-08-11T09:00:00Z" },
+      { ...feature, estimate_hours: 8, hours_logged: 5.5 },
+    );
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W34", generated_at: "2026-08-18T09:00:00Z" },
+      { ...feature, estimate_hours: 8, hours_logged: 10 },
+    );
+
+    const drift = await listEstimationDrift(db);
+
+    expect(drift).toEqual([
+      {
+        provider: "github",
+        repoId: "your-org/project-1",
+        week: "2026-W33",
+        estimateHours: 8,
+        hoursLogged: 5.5,
+        drift: -2.5,
+      },
+      {
+        provider: "github",
+        repoId: "your-org/project-1",
+        week: "2026-W34",
+        estimateHours: 8,
+        hoursLogged: 10,
+        drift: 2,
+      },
+    ]);
+  });
+});
+
+describe("listDeveloperAllocation", () => {
+  it("counts open todos and summed estimate hours per assignee", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const result = await listDeveloperAllocation(db);
+
+    expect(result).toEqual([{ owner: "dev-a", openTodoCount: 1, openEstimateHours: 3 }]);
+  });
+
+  it("excludes done todos and scopes by project", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const otherPayload = { ...payload, repo_id: "your-org/project-2", project: "project-2" };
+    const otherFeature = {
+      ...feature,
+      feature_id: "other-feature",
+      todos: [{ ...feature.todos[1], owner: "dev-b", todo_id: "t3" }],
+    };
+    await writeFeatureSnapshot(db, otherPayload, otherFeature);
+
+    const scoped = await listDeveloperAllocation(db, {
+      provider: "github",
+      repoId: "your-org/project-1",
+    });
+
+    expect(scoped).toEqual([{ owner: "dev-a", openTodoCount: 1, openEstimateHours: 3 }]);
   });
 });
