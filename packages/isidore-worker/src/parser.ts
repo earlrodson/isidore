@@ -78,11 +78,12 @@ export class FeatureFileParseError extends Error {
 /**
  * True for files a report/worker should parse as a work item. Excludes
  * GUIDELINES.md and TEMPLATE-*.md per GUIDELINES.md "Report tooling notes"
- * — those carry placeholder frontmatter, not real items.
+ * — those carry placeholder frontmatter, not real items — and any non-`.md`
+ * file, since `isi init` scaffolds `.isidore-templates.json` alongside them.
  */
 export function isFeatureFile(filename: string): boolean {
   const base = filename.split("/").pop() ?? filename;
-  return base !== "GUIDELINES.md" && !base.startsWith("TEMPLATE-");
+  return base.endsWith(".md") && base !== "GUIDELINES.md" && !base.startsWith("TEMPLATE-");
 }
 
 function findSection(body: string, heading: string): string | null {

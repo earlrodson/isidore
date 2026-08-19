@@ -28,6 +28,11 @@ describe("isFeatureFile", () => {
     expect(isFeatureFile("ingest-endpoint-hmac.md")).toBe(true);
     expect(isFeatureFile("docs/features/ingest-endpoint-hmac.md")).toBe(true);
   });
+
+  it("excludes the scaffold's non-.md manifest file", () => {
+    expect(isFeatureFile(".isidore-templates.json")).toBe(false);
+    expect(isFeatureFile("docs/features/.isidore-templates.json")).toBe(false);
+  });
 });
 
 describe("parseFeatureFile", () => {
