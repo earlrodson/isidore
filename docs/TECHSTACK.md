@@ -57,6 +57,7 @@ on:
 | Case | Command |
 |---|---|
 | Scaffold `docs/features/` in a newly onboarded repo | `isi init` |
+| Dump open `docs/features/` items for any CLI coding agent | `isi context` |
 | Backfill history on a newly onboarded repo | `isi push --week 2026-W30` |
 | Force re-send after CI outage or parser fix | `isi push --repo project-1 --week current` |
 | Preview payload before it goes live | `isi push --dry-run` |
@@ -67,6 +68,14 @@ in the `isidore-worker` package into `docs/features/`, byte-identical to the
 bundled copies, plus a `.isidore-templates.json` checksum manifest for a
 future `isi init --update` to detect drift. Refuses to overwrite an existing
 `docs/features/GUIDELINES.md` unless `--force` is passed.
+
+`isi context` prints every `docs/features/*.md` item with an open `status`
+(`planned`/`in-progress`/`blocked`) and at least one unchecked todo as a
+self-contained markdown block (title, description, acceptance criteria,
+remaining todos only). `--id <slug>` scopes to one item. It's deliberately
+agent-agnostic — a plain stdout dump, not a Claude-specific integration —
+so it composes with any CLI coding tool: `isi context | claude -p "implement
+the remaining todos above"`.
 
 Both triggers are safe to run concurrently because ingest is idempotent (keyed on `provider + repo_id + feature_id`) — a manual push and an automatic CI push simply overwrite the same row. The ingest endpoint has no notion of which trigger fired; that's what makes adding a second trigger free.
 

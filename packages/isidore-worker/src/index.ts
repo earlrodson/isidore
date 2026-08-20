@@ -46,6 +46,9 @@ export type {
   RunWorkerResult,
 } from "./core.js";
 
+export { buildContext, UnknownFeatureIdError } from "./context.js";
+export type { BuildContextParams } from "./context.js";
+
 export {
   TEMPLATES_MANIFEST_FILENAME,
   resourcesDir,

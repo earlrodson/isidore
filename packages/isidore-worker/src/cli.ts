@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { buildContext, UnknownFeatureIdError } from "./context.js";
 import {
   FeaturesFolderExistsError,
   initFeaturesFolder,
 } from "./scaffold.js";
 
 /**
- * `isi` CLI (TECHSTACK.md §3.1). v1 has one command: `isi init`, which
- * scaffolds `docs/features/` for a newly onboarded repo. `isi push` (the
- * manual override for `core.ts`'s `runWorker`) is tracked separately and not
- * yet implemented.
+ * `isi` CLI (TECHSTACK.md §3.1). Commands: `isi init` scaffolds
+ * `docs/features/` for a newly onboarded repo; `isi context` dumps its open
+ * items as markdown for any CLI-based coding agent to consume. `isi push`
+ * (the manual override for `core.ts`'s `runWorker`) is tracked separately
+ * and not yet implemented.
  */
 
 function printInitHelp(): void {
@@ -22,6 +24,22 @@ function printInitHelp(): void {
       "Usage: isi init [--force]",
       "",
       "  --force   Overwrite an existing docs/features/GUIDELINES.md",
+    ].join("\n"),
+  );
+}
+
+function printContextHelp(): void {
+  console.log(
+    [
+      "isi context — print docs/features/ open items (remaining todos) as",
+      "markdown, for piping into any CLI coding agent",
+      "",
+      "Usage: isi context [--id <slug>]",
+      "",
+      "  --id <slug>   Scope to a single item's frontmatter id instead of",
+      "                every item with an open status and remaining todos",
+      "",
+      "Example: isi context | claude -p \"implement the remaining todos above\"",
     ].join("\n"),
   );
 }
@@ -52,7 +70,30 @@ export async function main(argv: string[]): Promise<void> {
     return;
   }
 
-  console.error(`isi: unknown command "${command ?? ""}" — expected "init"`);
+  if (command === "context") {
+    if (rest.includes("--help")) {
+      printContextHelp();
+      return;
+    }
+    const idFlagIndex = rest.indexOf("--id");
+    const id = idFlagIndex === -1 ? undefined : rest[idFlagIndex + 1];
+    const featuresDir = join(process.cwd(), "docs", "features");
+    try {
+      console.log(buildContext({ featuresDir, id }));
+    } catch (error) {
+      if (error instanceof UnknownFeatureIdError) {
+        console.error(`isi context: ${error.message}`);
+        process.exitCode = 1;
+        return;
+      }
+      throw error;
+    }
+    return;
+  }
+
+  console.error(
+    `isi: unknown command "${command ?? ""}" — expected "init" or "context"`,
+  );
   process.exitCode = 1;
 }
 

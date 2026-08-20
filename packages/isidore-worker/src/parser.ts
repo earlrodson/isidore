@@ -51,6 +51,10 @@ export interface FeatureDailyLogEntry {
 
 export interface ParsedFeatureFile {
   frontmatter: FeatureFrontmatter;
+  /** Raw markdown of the "## Description" section, trimmed; "" if absent. */
+  description: string;
+  /** Raw markdown of the "## Acceptance criteria" section, trimmed; "" if absent. */
+  acceptanceCriteria: string;
   todos: FeatureTodo[];
   dailyLog: FeatureDailyLogEntry[];
   /**
@@ -165,9 +169,11 @@ export function parseFeatureFile(content: string): ParsedFeatureFile {
     throw new FeatureFileParseError("Frontmatter did not parse to an object");
   }
 
+  const description = findSection(body, "Description") ?? "";
+  const acceptanceCriteria = findSection(body, "Acceptance criteria") ?? "";
   const todos = parseTodos(findSection(body, "Todos"));
   const dailyLog = parseDailyLog(findSection(body, "Daily log"));
   const hoursLogged = dailyLog.reduce((sum, entry) => sum + entry.hours, 0);
 
-  return { frontmatter, todos, dailyLog, hoursLogged };
+  return { frontmatter, description, acceptanceCriteria, todos, dailyLog, hoursLogged };
 }

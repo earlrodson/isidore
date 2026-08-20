@@ -78,6 +78,38 @@ describe("parseFeatureFile", () => {
     expect(parsed.hoursLogged).toBe(0);
   });
 
+  it("extracts the Description and Acceptance criteria sections", () => {
+    const parsed = parseFeatureFile(fixture("isi-cli-init.md"));
+
+    expect(parsed.description).toContain("isi init");
+    expect(parsed.acceptanceCriteria).toContain(
+      "byte-identical to the canonical copies",
+    );
+  });
+
+  it("defaults description and acceptanceCriteria to empty strings when absent", () => {
+    const content = `---
+schema_version: 1
+id: no-sections
+title: No sections
+type: feature
+status: planned
+owners: [handle]
+estimate_hours: 0
+hours_logged: 0
+created: 2026-01-01
+updated: 2026-01-01
+---
+
+## Todos
+- [ ] Do the thing (@handle, est 1h)
+`;
+    const parsed = parseFeatureFile(content);
+
+    expect(parsed.description).toBe("");
+    expect(parsed.acceptanceCriteria).toBe("");
+  });
+
   it("throws on a missing frontmatter block", () => {
     expect(() => parseFeatureFile("## Description\nno frontmatter here")).toThrow(
       FeatureFileParseError,
