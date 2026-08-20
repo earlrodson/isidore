@@ -81,7 +81,14 @@ snippet. No manual DB access, no hand-written workflow YAML, ever again.
   with `ERR_PNPM_BAD_PM_VERSION` — see Decisions & risks. Fixed both
   autoallies-mobile's and rapidfire's workflow files and bumped
   `node-version` 20 → 22 while in there (Node 20 Actions runners are being
-  deprecated).
+  deprecated). After that fix, the re-triggered run still failed, now with
+  a 401 `{ error: "unknown repo" }` from the ingest endpoint — traced to
+  `seed-repo-secret.mjs` (and my own ad hoc `psql` check) reading
+  `apps/web/.env`'s `DATABASE_URL` (local dev Postgres), while the
+  deployed ingest route on Vercel reads `apps/web/.env.local`'s
+  `DATABASE_URL` (the real Neon prod DB) — two different databases, and
+  the repo secret only existed in the local one. Inserted the matching
+  `repo_secrets` row into the prod DB directly; re-run succeeded.
 
 ## Decisions & risks
 - **The two-repo-checkout workaround (AC-006) has a second failure mode
@@ -107,6 +114,23 @@ snippet. No manual DB access, no hand-written workflow YAML, ever again.
   onboarder with a pinned pnpm/node version. Any hand-written or
   OAuth-generated CI snippet under AC-005 must carry this fix (or, better,
   not need it) before it's safe to hand to a new onboarder.
+- **Two `DATABASE_URL`s exist for this app, and nothing stops a secret
+  from being seeded into the wrong one.** `apps/web/.env` points at local
+  dev Postgres; `apps/web/.env.local` points at the real Neon prod DB the
+  deployed ingest route actually reads. `seed-repo-secret.mjs` hardcodes
+  reading `apps/web/.env`, so running it (or any ad hoc `psql`/script
+  check) against "the" DATABASE_URL silently operates on dev data — the
+  repo secret gets created, `getRepoSecret` finds it locally, everything
+  looks seeded, and the first real CI run still 401s with "unknown repo"
+  because prod never got the row. No error surfaces until an actual
+  ingest request hits the deployed endpoint. AC-004's "generate a secret,
+  upsert it into `repo_secrets`" must upsert through the *running app's*
+  own DB connection (e.g. an authenticated onboarding API route), not a
+  standalone script pointed at a locally-guessed env file — that's the
+  only way "seeded" and "what production reads" can't drift apart. If
+  `seed-repo-secret.mjs` stays around as a manual fallback, it should at
+  minimum print which `DATABASE_URL` it resolved and require an explicit
+  `--prod` flag to touch anything other than local.
 - **OAuth App vs GitHub App — undecided, blocks AC-001/002.** A classic
   OAuth App is simpler and matches PRD §6.1's "log in via git provider
   OAuth" literally, but a GitHub App's installation flow gives per-repo
