@@ -12,3 +12,4 @@ coverage/
 .claude/vectors.db
 .claude/snapshot.json
 .vercel
+.env*
