@@ -8,6 +8,7 @@ import {
   buildTemplatesManifest,
   initFeaturesFolder,
   listCanonicalTemplateFiles,
+  readCanonicalTemplateFiles,
   resourcesDir,
 } from "../scaffold.js";
 
@@ -24,6 +25,32 @@ describe("resourcesDir / listCanonicalTemplateFiles", () => {
 
   it("resolves to a real directory on disk", () => {
     expect(() => listCanonicalTemplateFiles(resourcesDir())).not.toThrow();
+  });
+});
+
+describe("readCanonicalTemplateFiles", () => {
+  it("returns the same files initFeaturesFolder writes, plus the manifest, byte-identical", () => {
+    const files = readCanonicalTemplateFiles();
+
+    expect(files.map((f) => f.filename)).toEqual([
+      "GUIDELINES.md",
+      "TEMPLATE-defect.md",
+      "TEMPLATE-feature.md",
+      "TEMPLATE-spike.md",
+      TEMPLATES_MANIFEST_FILENAME,
+    ]);
+
+    const guidelines = files.find((f) => f.filename === "GUIDELINES.md");
+    expect(guidelines?.content).toBe(readFileSync(join(resourcesDir(), "GUIDELINES.md"), "utf-8"));
+
+    const manifest = files.find((f) => f.filename === TEMPLATES_MANIFEST_FILENAME);
+    expect(JSON.parse(manifest?.content ?? "")).toEqual(buildTemplatesManifest());
+  });
+
+  it("writes nothing to disk", () => {
+    const destDir = join(mkdtempSync(join(tmpdir(), "isidore-read-")), "docs", "features");
+    readCanonicalTemplateFiles();
+    expect(() => readFileSync(join(destDir, "GUIDELINES.md"))).toThrow();
   });
 });
 

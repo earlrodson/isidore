@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && cp -r resources dist/resources",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "release:prepare": "node scripts/prepare-release.mjs"
   },
   "dependencies": {
     "@isidore/shared": "workspace:*",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "esbuild": "^0.24.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }

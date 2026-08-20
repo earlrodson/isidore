@@ -122,6 +122,20 @@ describe("getProjectDetail", () => {
       owner: "dev-a",
     });
   });
+
+  it("surfaces a feature's environment, or null when it hasn't been resolved (feature-environment-tracking AC-005)", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    await writeFeatureSnapshot(db, payload, feature);
+    const detailWithoutEnvironment = await getProjectDetail(db, payload.provider, payload.repo_id);
+    expect(detailWithoutEnvironment?.features[0].environment).toBeNull();
+
+    const envPayload = parseIngestPayload(loadFixture("valid-with-environment.json"));
+    const envFeature = envPayload.features[0];
+    await writeFeatureSnapshot(db, envPayload, envFeature);
+    const detailWithEnvironment = await getProjectDetail(db, envPayload.provider, envPayload.repo_id);
+    expect(detailWithEnvironment?.features[0].environment).toBe("staging");
+  });
 });
 
 describe("listFeaturesCompletedPerWeek", () => {

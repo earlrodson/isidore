@@ -39,7 +39,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         project.features.map((feature) => (
           <section key={feature.featureId}>
             <h2>
-              {feature.title} — {feature.status}
+              {feature.title} — {feature.status} [{feature.environment ?? "unknown"}]
             </h2>
             <p>
               Hours logged: {formatHours(feature.hoursLogged)} / {formatHours(feature.estimateHours)}

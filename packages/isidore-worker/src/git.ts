@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import type { OpenPr } from "@isidore/shared";
+import type { Environment, OpenPr } from "@isidore/shared";
 
 /**
  * Git/GitHub enrichment step (TECHSTACK.md §3 pipeline: "enrich from git —
@@ -116,4 +116,75 @@ export async function enrichOpenPrsByFeature(
   }
 
   return result;
+}
+
+const DEFAULT_STAGING_BRANCH = "staging";
+const DEFAULT_PRODUCTION_BRANCH_CANDIDATES = ["main", "master"];
+
+export interface EnvironmentBranches {
+  staging?: string;
+  production?: string;
+}
+
+/**
+ * Is `commitSha` an ancestor of (or equal to) `branch`'s tip? Compares
+ * `sha...branch`, per the GitHub compare API's base/head semantics: `branch`
+ * is ahead of (or identical to) `sha` exactly when `sha` has already reached
+ * it. Returns `null`, not `false`, when `branch` doesn't exist — the caller
+ * needs to tell "not shipped yet" apart from "can't tell" (AC-006).
+ */
+async function isCommitInBranch(
+  params: GitHubApiParams,
+  commitSha: string,
+  branch: string,
+): Promise<boolean | null> {
+  try {
+    const result = await githubApiRequest<{ status: string }>(
+      params,
+      `/compare/${commitSha}...${branch}`,
+    );
+    return result.status === "identical" || result.status === "ahead";
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("(404)")) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * docs/features/feature-environment-tracking.md — the furthest environment
+ * `commitSha` has reached, via ancestry against the staging/production branch
+ * tips (never by re-parsing `docs/features/` off those branches). Checks
+ * production first since it's the furthest signal. `branches.production`
+ * defaults to `main`, falling back to `master` if `main` doesn't exist
+ * (AC-003); `branches.staging` defaults to `staging`. Returns `null` only
+ * when neither branch could be resolved at all (AC-006) — a resolvable
+ * branch that the commit simply hasn't reached yet yields `"develop"`.
+ */
+export async function resolveEnvironment(
+  params: GitHubApiParams,
+  commitSha: string,
+  branches: EnvironmentBranches = {},
+): Promise<Environment | null> {
+  const productionCandidates = branches.production
+    ? [branches.production]
+    : DEFAULT_PRODUCTION_BRANCH_CANDIDATES;
+
+  let inProduction: boolean | null = null;
+  for (const candidate of productionCandidates) {
+    inProduction = await isCommitInBranch(params, commitSha, candidate);
+    if (inProduction !== null) break;
+  }
+
+  const inStaging = await isCommitInBranch(
+    params,
+    commitSha,
+    branches.staging ?? DEFAULT_STAGING_BRANCH,
+  );
+
+  if (inProduction) return "production";
+  if (inStaging) return "staging";
+  if (inProduction === null && inStaging === null) return null;
+  return "develop";
 }

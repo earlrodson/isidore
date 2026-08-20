@@ -102,6 +102,8 @@ Feature plans are authored against **`develop`**.
 
 Planning artifacts arrive on `develop` **via pull request**, not direct commit. This gives a review checkpoint before a feature breakdown becomes official, clean diff history on the planning docs themselves (needed for estimation-drift reporting), and a single reliable automation trigger: merge to `develop`.
 
+**Addendum (docs/features/feature-environment-tracking.md):** the rule above governs where plans are *authored and read from* — that stays `develop`-only. Separately, the worker also reads staging's and main's commit history (never their `docs/features/` content) to compute a per-feature `develop | staging | production` signal, via commit-ancestry against those branches' tips (e.g. the GitHub compare API), not by re-parsing plans off them. This does not change the base-branch rule; it answers a different question — "has this feature's code shipped," not "what does the plan say."
+
 ### 5.3 Daily reporting
 
 Daily standup content is **derived, not authored**:

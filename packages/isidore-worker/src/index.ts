@@ -54,11 +54,13 @@ export {
   resourcesDir,
   listCanonicalTemplateFiles,
   buildTemplatesManifest,
+  readCanonicalTemplateFiles,
   initFeaturesFolder,
   FeaturesFolderExistsError,
 } from "./scaffold.js";
 export type {
   TemplatesManifest,
+  CanonicalTemplateFile,
   InitFeaturesFolderParams,
   InitFeaturesFolderResult,
 } from "./scaffold.js";

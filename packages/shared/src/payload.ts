@@ -9,7 +9,7 @@ import { z } from "zod";
  * ever; a later push overwrites, it never forks a new row per week.
  */
 
-export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0"] as const;
+export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1"] as const;
 
 export const ProviderSchema = z.enum([
   "github",
@@ -27,6 +27,16 @@ export const FeatureStatusSchema = z.enum([
 ]);
 
 export const OpenPrStateSchema = z.enum(["open", "closed", "merged"]);
+
+/**
+ * docs/features/feature-environment-tracking.md — furthest environment a
+ * feature's last-seen commit has reached, via ancestry against staging/main
+ * tips (never by re-parsing docs/features/ off those branches, per PRD.md
+ * §5.2's addendum). `null`/absent means it couldn't be determined (e.g. no
+ * staging/main branch configured) — added in "1.1", optional so "1.0"
+ * payloads without it still validate.
+ */
+export const EnvironmentSchema = z.enum(["develop", "staging", "production"]);
 
 export const OpenPrSchema = z.object({
   number: z.number().int().positive(),
@@ -51,6 +61,7 @@ export const FeatureSchema = z.object({
   owners: z.array(z.string().min(1)).min(1),
   estimate_hours: z.number().nonnegative(),
   hours_logged: z.number().nonnegative(),
+  environment: EnvironmentSchema.nullable().optional(),
   todos: z.array(TodoSchema),
   open_prs: z.array(OpenPrSchema),
 });
@@ -70,6 +81,7 @@ export const IngestPayloadSchema = z.object({
 
 export type Provider = z.infer<typeof ProviderSchema>;
 export type FeatureStatus = z.infer<typeof FeatureStatusSchema>;
+export type Environment = z.infer<typeof EnvironmentSchema>;
 export type OpenPr = z.infer<typeof OpenPrSchema>;
 export type Todo = z.infer<typeof TodoSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;

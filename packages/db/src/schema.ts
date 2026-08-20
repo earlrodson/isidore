@@ -84,6 +84,11 @@ export const features = pgTable(
     estimateHours: doublePrecision("estimate_hours").notNull(),
     hoursLogged: doublePrecision("hours_logged").notNull(),
     openPrs: jsonb("open_prs").notNull(),
+    // docs/features/feature-environment-tracking.md — furthest environment
+    // this feature's last-seen commit has reached (develop/staging/
+    // production), via commit-ancestry, not by re-parsing docs/features/ off
+    // other branches. Null when undetermined (e.g. no staging/main branch).
+    environment: text("environment"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -226,6 +231,105 @@ export const repoSecrets = pgTable(
   },
   (table) => [
     unique("repo_secrets_provider_repo_key").on(table.provider, table.repoId),
+  ],
+);
+
+/**
+ * Onboarding identity (docs/features/onboarding-oauth.md). Deliberately
+ * disjoint from `repoSecrets`/ingest: this is the first auth surface in the
+ * app, kept minimal per PRD open question #2 (org-wide read for v1, no
+ * per-project ACL) rather than over-building roles ahead of need.
+ */
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  login: text("login").notNull(),
+  avatarUrl: text("avatar_url"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * One row per (provider, provider account) a user has logged in with.
+ * Separate from `users` so a second provider (TECHSTACK.md §8 build order
+ * step 9) can link to an existing user rather than forcing a new identity.
+ */
+export const oauthAccounts = pgTable(
+  "oauth_accounts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    accessToken: text("access_token").notNull(),
+    refreshToken: text("refresh_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+      withTimezone: true,
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("oauth_accounts_provider_account_key").on(
+      table.provider,
+      table.providerAccountId,
+    ),
+  ],
+);
+
+/**
+ * Server-side session, looked up by a hash of the cookie's bearer token
+ * (the raw token itself is never stored, matching the repo secret's
+ * display-once posture in spirit — a stolen DB row alone can't replay a
+ * session).
+ */
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * A GitHub App installation the user connected during onboarding
+ * (docs/features/onboarding-oauth.md AC-002/003). Repo access comes from
+ * this installation's grant, not from browsing everything the user can
+ * see on GitHub.
+ */
+export const githubInstallations = pgTable(
+  "github_installations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    installationId: text("installation_id").notNull(),
+    accountLogin: text("account_login").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("github_installations_installation_id_key").on(
+      table.installationId,
+    ),
   ],
 );
 

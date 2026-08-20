@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildContext, UnknownFeatureIdError } from "./context.js";
@@ -97,7 +98,10 @@ export async function main(argv: string[]): Promise<void> {
   process.exitCode = 1;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// realpathSync matters when invoked via an npm/pnpm bin symlink
+// (node_modules/.bin/isi) — process.argv[1] is the symlink path, which
+// import.meta.url (always the real file) would never equal otherwise.
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   main(process.argv.slice(2)).catch((error) => {
     console.error(error);
     process.exitCode = 1;

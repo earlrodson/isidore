@@ -91,6 +91,26 @@ describe("writeFeatureSnapshot", () => {
     expect(featureRows[0].status).toBe("done");
   });
 
+  it("defaults environment to null when the payload doesn't carry it (1.0 backward compat)", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.environment).toBeNull();
+  });
+
+  it("persists a 1.1 payload's per-feature environment", async () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-environment.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.environment).toBe("staging");
+  });
+
   it("removes todos no longer present in a full-refresh snapshot", async () => {
     const payload = parseIngestPayload(loadFixture("valid.json"));
     const feature = payload.features[0];

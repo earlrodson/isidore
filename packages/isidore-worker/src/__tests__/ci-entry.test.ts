@@ -66,6 +66,8 @@ describe("ci-entry main", () => {
       ISIDORE_BASE_BRANCH: "main",
       ISIDORE_TIMEZONE: "Asia/Manila",
       ISIDORE_FEATURES_DIR: "custom/features",
+      ISIDORE_STAGING_BRANCH: "stage",
+      ISIDORE_PRODUCTION_BRANCH: "release",
     });
     runWorker.mockResolvedValue({
       status: 200,
@@ -84,6 +86,8 @@ describe("ci-entry main", () => {
         baseBranch: "main",
         timezone: "Asia/Manila",
         featuresDir: "custom/features",
+        stagingBranch: "stage",
+        productionBranch: "release",
       }),
     );
   });

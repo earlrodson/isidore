@@ -15,6 +15,20 @@
       "when": 1787039053724,
       "tag": "0001_nasty_stardust",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787196034222,
+      "tag": "0002_melted_forge",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787206914644,
+      "tag": "0003_jazzy_yellow_claw",
+      "breakpoints": true
     }
   ]
 }

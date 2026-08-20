@@ -7,7 +7,7 @@ import {
   type Provider,
   type Todo,
 } from "@isidore/shared";
-import { enrichOpenPrsByFeature, getHeadCommitSha } from "./git.js";
+import { enrichOpenPrsByFeature, getHeadCommitSha, resolveEnvironment } from "./git.js";
 import { isFeatureFile, parseFeatureFile } from "./parser.js";
 import { postSnapshot, type PostSnapshotResult } from "./send.js";
 
@@ -66,6 +66,8 @@ export interface BuildSnapshotParams {
   owner: string;
   repo: string;
   githubToken: string;
+  stagingBranch?: string;
+  productionBranch?: string;
   now?: () => number;
   loadFeatures?: (featuresDir: string) => FeatureFileSource[];
   fetchImpl?: Parameters<typeof enrichOpenPrsByFeature>[0]["fetchImpl"];
@@ -86,15 +88,20 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   });
 
   const featureIds = parsed.map((file) => file.frontmatter.id);
-  const openPrsByFeature = await enrichOpenPrsByFeature(
-    {
-      owner: params.owner,
-      repo: params.repo,
-      token: params.githubToken,
-      fetchImpl: params.fetchImpl,
-    },
-    featureIds,
-  );
+  const gitApiParams = {
+    owner: params.owner,
+    repo: params.repo,
+    token: params.githubToken,
+    fetchImpl: params.fetchImpl,
+  };
+  const commitSha = getHeadCommitSha(params.cwd);
+  const [openPrsByFeature, environment] = await Promise.all([
+    enrichOpenPrsByFeature(gitApiParams, featureIds),
+    resolveEnvironment(gitApiParams, commitSha, {
+      staging: params.stagingBranch,
+      production: params.productionBranch,
+    }),
+  ]);
 
   const features: Feature[] = parsed.map((file) => ({
     feature_id: file.frontmatter.id,
@@ -104,6 +111,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
     owners: file.frontmatter.owners,
     estimate_hours: file.frontmatter.estimate_hours ?? file.frontmatter.timebox_hours ?? 0,
     hours_logged: file.hoursLogged,
+    environment,
     todos: file.todos.map(toTodo),
     open_prs: openPrsByFeature[file.frontmatter.id] ?? [],
   }));
@@ -111,13 +119,13 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const generatedAt = new Date(now());
 
   return parseIngestPayload({
-    payload_schema_version: "1.0",
+    payload_schema_version: "1.1",
     provider: params.provider,
     repo_id: params.repoId,
     project: params.project,
     week: isoWeek(generatedAt),
     base_branch: params.baseBranch,
-    commit_sha: getHeadCommitSha(params.cwd),
+    commit_sha: commitSha,
     generated_at: generatedAt.toISOString(),
     timezone: params.timezone,
     features,

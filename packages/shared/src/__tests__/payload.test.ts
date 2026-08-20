@@ -19,6 +19,17 @@ describe("parseIngestPayload", () => {
     expect(payload.features[0].feature_id).toBe("auth-refresh");
   });
 
+  it("accepts a 1.0 payload with no environment field (backward compat)", () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    expect(payload.features[0].environment).toBeUndefined();
+  });
+
+  it("accepts a 1.1 payload with a per-feature environment", () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-environment.json"));
+    expect(payload.payload_schema_version).toBe("1.1");
+    expect(payload.features[0].environment).toBe("staging");
+  });
+
   it("rejects an unknown payload_schema_version", () => {
     expect(() =>
       parseIngestPayload(loadFixture("reject-unknown-schema-version.json")),

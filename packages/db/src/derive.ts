@@ -44,6 +44,7 @@ export async function deriveSnapshot(
       estimateHours: feature.estimate_hours,
       hoursLogged: feature.hours_logged,
       openPrs: feature.open_prs,
+      environment: feature.environment ?? null,
     })
     .onConflictDoUpdate({
       target: [schema.features.projectId, schema.features.featureId],
@@ -54,6 +55,7 @@ export async function deriveSnapshot(
         estimateHours: feature.estimate_hours,
         hoursLogged: feature.hours_logged,
         openPrs: feature.open_prs,
+        environment: feature.environment ?? null,
         updatedAt: sql`now()`,
       },
     })

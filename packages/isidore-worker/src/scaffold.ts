@@ -40,6 +40,37 @@ export function buildTemplatesManifest(dir: string = resourcesDir()): TemplatesM
   return { schema_version: 1, files };
 }
 
+export interface CanonicalTemplateFile {
+  filename: string;
+  content: string;
+}
+
+/**
+ * Reads the canonical GUIDELINES.md + templates (plus the checksum
+ * manifest) without writing anything to disk — the remote-commit path used
+ * by onboarding's "scaffold docs/features/" offer
+ * (docs/features/onboarding-oauth.md AC-003), which writes via a git
+ * provider's contents API instead of `fs`. `initFeaturesFolder` below is
+ * the local-filesystem equivalent for `isi init`; both read from the same
+ * bundled `resources/` so the two never drift apart.
+ */
+export function readCanonicalTemplateFiles(
+  dir: string = resourcesDir(),
+): CanonicalTemplateFile[] {
+  const files = listCanonicalTemplateFiles(dir).map((filename) => ({
+    filename,
+    content: readFileSync(join(dir, filename), "utf-8"),
+  }));
+
+  const manifest = buildTemplatesManifest(dir);
+  files.push({
+    filename: TEMPLATES_MANIFEST_FILENAME,
+    content: `${JSON.stringify(manifest, null, 2)}\n`,
+  });
+
+  return files;
+}
+
 export class FeaturesFolderExistsError extends Error {
   constructor(destDir: string) {
     super(

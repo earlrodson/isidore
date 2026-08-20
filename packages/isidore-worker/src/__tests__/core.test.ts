@@ -84,6 +84,19 @@ describe("buildSnapshot", () => {
     expect(payload.features[0].prd_ref).toBe("unspecified");
   });
 
+  it("attaches the resolved environment to every feature (feature-environment-tracking AC-001)", async () => {
+    const fetchImpl = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes("/compare/")) {
+        const branch = url.split("...")[1];
+        return jsonResponse({ status: branch === "main" ? "identical" : "behind" });
+      }
+      return jsonResponse([]);
+    });
+
+    const payload = await buildSnapshot({ ...baseParams, cwd: process.cwd(), fetchImpl });
+    expect(payload.features[0].environment).toBe("production");
+  });
+
   it("throws a descriptive error when a feature file fails to parse", async () => {
     await expect(
       buildSnapshot({

@@ -95,6 +95,7 @@ export interface ProjectDetailFeature {
   estimateHours: number;
   hoursLogged: number;
   openPrs: unknown;
+  environment: string | null;
   todos: ProjectDetailTodo[];
 }
 
@@ -145,6 +146,7 @@ export async function getProjectDetail(
       estimateHours: feature.estimateHours,
       hoursLogged: feature.hoursLogged,
       openPrs: feature.openPrs,
+      environment: feature.environment,
       todos: todosByFeature.get(feature.id) ?? [],
     })),
   };

@@ -8,6 +8,7 @@ import {
   fetchOpenPullRequests,
   fetchPullRequestFiles,
   getHeadCommitSha,
+  resolveEnvironment,
 } from "../git.js";
 
 describe("getHeadCommitSha", () => {
@@ -150,5 +151,60 @@ describe("enrichOpenPrsByFeature", () => {
     );
 
     expect(result).toEqual({ "auth-refresh": [] });
+  });
+});
+
+describe("resolveEnvironment", () => {
+  const sha = "abc123";
+
+  function compareFetch(statusByBranch: Record<string, string | "missing">) {
+    return vi.fn().mockImplementation(async (url: string) => {
+      const branch = url.split("...")[1];
+      const status = statusByBranch[branch];
+      if (status === undefined) throw new Error(`unexpected compare: ${url}`);
+      if (status === "missing") return jsonResponse({}, false, 404);
+      return jsonResponse({ status });
+    });
+  }
+
+  it("returns production when the commit has reached main", async () => {
+    const fetchImpl = compareFetch({ main: "identical", staging: "behind" });
+    const environment = await resolveEnvironment({ owner: "acme", repo: "project-1", token: "t", fetchImpl }, sha);
+    expect(environment).toBe("production");
+  });
+
+  it("falls back to master when main doesn't exist", async () => {
+    const fetchImpl = compareFetch({ main: "missing", master: "ahead", staging: "behind" });
+    const environment = await resolveEnvironment({ owner: "acme", repo: "project-1", token: "t", fetchImpl }, sha);
+    expect(environment).toBe("production");
+  });
+
+  it("returns staging when not yet in production but in staging", async () => {
+    const fetchImpl = compareFetch({ main: "behind", staging: "ahead" });
+    const environment = await resolveEnvironment({ owner: "acme", repo: "project-1", token: "t", fetchImpl }, sha);
+    expect(environment).toBe("staging");
+  });
+
+  it("returns develop when resolvable branches exist but haven't reached the commit yet", async () => {
+    const fetchImpl = compareFetch({ main: "behind", staging: "diverged" });
+    const environment = await resolveEnvironment({ owner: "acme", repo: "project-1", token: "t", fetchImpl }, sha);
+    expect(environment).toBe("develop");
+  });
+
+  it("returns null when neither branch can be resolved", async () => {
+    const fetchImpl = compareFetch({ main: "missing", master: "missing", staging: "missing" });
+    const environment = await resolveEnvironment({ owner: "acme", repo: "project-1", token: "t", fetchImpl }, sha);
+    expect(environment).toBeNull();
+  });
+
+  it("honors explicit staging/production branch name overrides", async () => {
+    const fetchImpl = compareFetch({ release: "identical", stage: "behind" });
+    const environment = await resolveEnvironment(
+      { owner: "acme", repo: "project-1", token: "t", fetchImpl },
+      sha,
+      { staging: "stage", production: "release" },
+    );
+    expect(environment).toBe("production");
+    expect(fetchImpl).not.toHaveBeenCalledWith(expect.stringContaining("...main"), expect.anything());
   });
 });
