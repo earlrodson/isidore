@@ -111,6 +111,30 @@ describe("writeFeatureSnapshot", () => {
     expect(featureRow.environment).toBe("staging");
   });
 
+  it("defaults type/severity/relatesTo to null when the payload doesn't carry them (pre-1.2 backward compat)", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.type).toBeNull();
+    expect(featureRow.severity).toBeNull();
+    expect(featureRow.relatesTo).toBeNull();
+  });
+
+  it("persists a 1.2 payload's type/severity/relatesTo", async () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-type-severity.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.type).toBe("defect");
+    expect(featureRow.severity).toBe("high");
+    expect(featureRow.relatesTo).toEqual(["auth-refresh"]);
+  });
+
   it("removes todos no longer present in a full-refresh snapshot", async () => {
     const payload = parseIngestPayload(loadFixture("valid.json"));
     const feature = payload.features[0];

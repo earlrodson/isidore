@@ -30,6 +30,21 @@ describe("parseIngestPayload", () => {
     expect(payload.features[0].environment).toBe("staging");
   });
 
+  it("accepts a 1.2 payload with type/severity/relates_to", () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-type-severity.json"));
+    expect(payload.payload_schema_version).toBe("1.2");
+    expect(payload.features[0].type).toBe("defect");
+    expect(payload.features[0].severity).toBe("high");
+    expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
+  });
+
+  it("accepts a 1.1 payload with no type/severity/relates_to field (backward compat)", () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-environment.json"));
+    expect(payload.features[0].type).toBeUndefined();
+    expect(payload.features[0].severity).toBeUndefined();
+    expect(payload.features[0].relates_to).toBeUndefined();
+  });
+
   it("rejects an unknown payload_schema_version", () => {
     expect(() =>
       parseIngestPayload(loadFixture("reject-unknown-schema-version.json")),

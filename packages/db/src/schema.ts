@@ -89,6 +89,12 @@ export const features = pgTable(
     // production), via commit-ancestry, not by re-parsing docs/features/ off
     // other branches. Null when undetermined (e.g. no staging/main branch).
     environment: text("environment"),
+    // payload contract 1.2 (docs/features/payload-contract-v1-2-type-severity.md)
+    // — the item's kind and, for defects, severity + the slugs it relates
+    // to. Null for pre-1.2 senders that never set them.
+    type: text("type"),
+    severity: text("severity"),
+    relatesTo: jsonb("relates_to"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

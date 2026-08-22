@@ -84,6 +84,26 @@ describe("buildSnapshot", () => {
     expect(payload.features[0].prd_ref).toBe("unspecified");
   });
 
+  it("forwards type/severity/relates_to from frontmatter to the payload (payload contract 1.2)", async () => {
+    const defectFileContent = featureFileContent
+      .replace("id: auth-refresh", "id: auth-refresh-regression")
+      .replace("type: feature", "type: defect")
+      .replace("priority: high", "severity: high\nrelates_to: [auth-refresh]");
+
+    const payload = await buildSnapshot({
+      ...baseParams,
+      cwd: process.cwd(),
+      loadFeatures: () => [
+        { filename: "auth-refresh-regression.md", content: defectFileContent },
+      ],
+    });
+
+    expect(payload.payload_schema_version).toBe("1.2");
+    expect(payload.features[0].type).toBe("defect");
+    expect(payload.features[0].severity).toBe("high");
+    expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
+  });
+
   it("attaches the resolved environment to every feature (feature-environment-tracking AC-001)", async () => {
     const fetchImpl = vi.fn().mockImplementation(async (url: string) => {
       if (url.includes("/compare/")) {

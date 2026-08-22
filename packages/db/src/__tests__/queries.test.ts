@@ -52,7 +52,14 @@ describe("listProjectSummaries", () => {
     await writeFeatureSnapshot(db, payload, staleFeature);
 
     const donePayload = { ...payload, repo_id: "your-org/project-2", project: "project-2" };
-    const doneFeature = { ...feature, feature_id: "other-feature", status: "done" as const };
+    // No todos here, deliberately — this project's rollup is asserted to be
+    // stale-free, so it must not inherit `feature.todos`' own `due` dates.
+    const doneFeature = {
+      ...feature,
+      feature_id: "other-feature",
+      status: "done" as const,
+      todos: [],
+    };
     await writeFeatureSnapshot(db, donePayload, doneFeature);
 
     const summaries = await listProjectSummaries(db);
@@ -135,6 +142,30 @@ describe("getProjectDetail", () => {
     await writeFeatureSnapshot(db, envPayload, envFeature);
     const detailWithEnvironment = await getProjectDetail(db, envPayload.provider, envPayload.repo_id);
     expect(detailWithEnvironment?.features[0].environment).toBe("staging");
+  });
+
+  it("surfaces a feature's type/severity/relatesTo, or null when the payload predates 1.2", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    await writeFeatureSnapshot(db, payload, feature);
+    const detailWithoutType = await getProjectDetail(db, payload.provider, payload.repo_id);
+    const untypedFeature = detailWithoutType?.features.find(
+      (f) => f.featureId === "auth-refresh",
+    );
+    expect(untypedFeature?.type).toBeNull();
+    expect(untypedFeature?.severity).toBeNull();
+    expect(untypedFeature?.relatesTo).toBeNull();
+
+    const typedPayload = parseIngestPayload(loadFixture("valid-with-type-severity.json"));
+    const typedFeature = typedPayload.features[0];
+    await writeFeatureSnapshot(db, typedPayload, typedFeature);
+    const detailWithType = await getProjectDetail(db, typedPayload.provider, typedPayload.repo_id);
+    const defectFeature = detailWithType?.features.find(
+      (f) => f.featureId === "auth-refresh-regression",
+    );
+    expect(defectFeature?.type).toBe("defect");
+    expect(defectFeature?.severity).toBe("high");
+    expect(defectFeature?.relatesTo).toEqual(["auth-refresh"]);
   });
 });
 

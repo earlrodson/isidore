@@ -1,0 +1,27 @@
+{
+  "payload_schema_version": "1.2",
+  "provider": "github",
+  "repo_id": "your-org/project-1",
+  "project": "project-1",
+  "week": "2026-W34",
+  "base_branch": "develop",
+  "commit_sha": "a1b2c3d",
+  "generated_at": "2026-08-18T09:00:00+08:00",
+  "timezone": "Asia/Manila",
+  "features": [
+    {
+      "feature_id": "auth-refresh-regression",
+      "title": "Token refresh silently fails after rotation",
+      "prd_ref": "docs/PRD.md#4.2",
+      "status": "in-progress",
+      "owners": ["dev-a"],
+      "estimate_hours": 3,
+      "hours_logged": 1,
+      "type": "defect",
+      "severity": "high",
+      "relates_to": ["auth-refresh"],
+      "todos": [],
+      "open_prs": []
+    }
+  ]
+}

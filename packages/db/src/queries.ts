@@ -96,6 +96,9 @@ export interface ProjectDetailFeature {
   hoursLogged: number;
   openPrs: unknown;
   environment: string | null;
+  type: string | null;
+  severity: string | null;
+  relatesTo: unknown;
   todos: ProjectDetailTodo[];
 }
 
@@ -147,6 +150,9 @@ export async function getProjectDetail(
       hoursLogged: feature.hoursLogged,
       openPrs: feature.openPrs,
       environment: feature.environment,
+      type: feature.type,
+      severity: feature.severity,
+      relatesTo: feature.relatesTo,
       todos: todosByFeature.get(feature.id) ?? [],
     })),
   };

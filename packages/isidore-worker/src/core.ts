@@ -112,6 +112,9 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
     estimate_hours: file.frontmatter.estimate_hours ?? file.frontmatter.timebox_hours ?? 0,
     hours_logged: file.hoursLogged,
     environment,
+    type: file.frontmatter.type,
+    severity: file.frontmatter.severity,
+    relates_to: file.frontmatter.relates_to,
     todos: file.todos.map(toTodo),
     open_prs: openPrsByFeature[file.frontmatter.id] ?? [],
   }));
@@ -119,7 +122,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const generatedAt = new Date(now());
 
   return parseIngestPayload({
-    payload_schema_version: "1.1",
+    payload_schema_version: "1.2",
     provider: params.provider,
     repo_id: params.repoId,
     project: params.project,

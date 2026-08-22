@@ -9,7 +9,7 @@ import { z } from "zod";
  * ever; a later push overwrites, it never forks a new row per week.
  */
 
-export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1"] as const;
+export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2"] as const;
 
 export const ProviderSchema = z.enum([
   "github",
@@ -38,6 +38,22 @@ export const OpenPrStateSchema = z.enum(["open", "closed", "merged"]);
  */
 export const EnvironmentSchema = z.enum(["develop", "staging", "production"]);
 
+/**
+ * docs/features/GUIDELINES.md — the item's kind, parsed from
+ * `docs/features/<slug>.md` frontmatter's `type` key. `feature`/`enabler`
+ * are the common case; `defect`/`spike` carry `severity`/`timebox_hours`
+ * instead of `priority`/`estimate_hours` in the source file, but always
+ * arrive here as a `feature` shape once the worker normalizes them. Added
+ * in "1.2", optional so "1.0"/"1.1" payloads without it still validate.
+ */
+export const FeatureTypeSchema = z.enum(["feature", "enabler", "defect", "spike"]);
+
+/**
+ * docs/features/GUIDELINES.md — `defect` frontmatter's `severity` key,
+ * carried through only when `type` is `defect`. Added in "1.2", optional.
+ */
+export const SeveritySchema = z.enum(["low", "medium", "high", "critical"]);
+
 export const OpenPrSchema = z.object({
   number: z.number().int().positive(),
   state: OpenPrStateSchema,
@@ -62,6 +78,9 @@ export const FeatureSchema = z.object({
   estimate_hours: z.number().nonnegative(),
   hours_logged: z.number().nonnegative(),
   environment: EnvironmentSchema.nullable().optional(),
+  type: FeatureTypeSchema.optional(),
+  severity: SeveritySchema.optional(),
+  relates_to: z.array(z.string().min(1)).optional(),
   todos: z.array(TodoSchema),
   open_prs: z.array(OpenPrSchema),
 });
@@ -82,6 +101,8 @@ export const IngestPayloadSchema = z.object({
 export type Provider = z.infer<typeof ProviderSchema>;
 export type FeatureStatus = z.infer<typeof FeatureStatusSchema>;
 export type Environment = z.infer<typeof EnvironmentSchema>;
+export type FeatureType = z.infer<typeof FeatureTypeSchema>;
+export type Severity = z.infer<typeof SeveritySchema>;
 export type OpenPr = z.infer<typeof OpenPrSchema>;
 export type Todo = z.infer<typeof TodoSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;

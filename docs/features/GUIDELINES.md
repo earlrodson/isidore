@@ -112,7 +112,11 @@ script computes the reverse join by scanning every file's `relates_to`.
 
 ## Report tooling notes
 
-A future Isidore reporting tool reading these files should:
+The Isidore worker reads these files on every push and forwards `type`,
+`severity`, and `relates_to` through to the dashboard (ingest payload
+contract `1.2`) — a `defect` or `spike` file shows up there as such, not
+just as an undifferentiated `feature`. It, and any other tool reading
+these files, should:
 - Glob `docs/features/*.md` **excluding** `GUIDELINES.md` and `TEMPLATE-*.md`
   by filename — those two carry placeholder frontmatter, not real items.
 - Treat `relates_to` as one-directional and compute the reverse join itself

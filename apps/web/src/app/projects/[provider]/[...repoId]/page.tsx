@@ -39,12 +39,17 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         project.features.map((feature) => (
           <section key={feature.featureId}>
             <h2>
+              {feature.type ? `[${feature.type}] ` : ""}
               {feature.title} — {feature.status} [{feature.environment ?? "unknown"}]
+              {feature.severity ? ` (severity: ${feature.severity})` : ""}
             </h2>
             <p>
               Hours logged: {formatHours(feature.hoursLogged)} / {formatHours(feature.estimateHours)}
             </p>
             <p>Open PRs: {Array.isArray(feature.openPrs) ? feature.openPrs.length : 0}</p>
+            {Array.isArray(feature.relatesTo) && feature.relatesTo.length > 0 ? (
+              <p>Relates to: {(feature.relatesTo as string[]).join(", ")}</p>
+            ) : null}
             <ul>
               {feature.todos.map((todo) => (
                 <li key={todo.todoId}>

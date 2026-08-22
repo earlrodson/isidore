@@ -29,6 +29,13 @@
       "when": 1787206914644,
       "tag": "0003_jazzy_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787368963139,
+      "tag": "0004_flaky_exodus",
+      "breakpoints": true
     }
   ]
 }
