@@ -278,10 +278,15 @@ export interface EstimationDriftPoint {
 }
 
 /**
- * Estimate vs actual per feature per week, joined on the append-only
+ * Estimate vs actual per project per week, summed across every feature that
+ * had both an estimate and an actual that week — joined on the append-only
  * `estimates`/`actuals` history (schema.ts) so a mid-flight re-estimate shows
  * up as that week's drift rather than being reconciled against the original
- * estimate (docs/specifications/p0-reports.md decision log).
+ * estimate (docs/specifications/p0-reports.md decision log: "trended by
+ * week, per project and rolled up cross-project"). `GROUP BY` is what makes
+ * this one row per (project, week) rather than one per (feature, week) —
+ * without it, a project with N features in flight that week would render as
+ * N indistinguishable rows sharing the same key on the dashboard.
  */
 export async function listEstimationDrift(
   db: Tx,
@@ -292,8 +297,8 @@ export async function listEstimationDrift(
       provider: schema.projects.provider,
       repoId: schema.projects.repoId,
       week: schema.estimates.week,
-      estimateHours: schema.estimates.estimateHours,
-      hoursLogged: schema.actuals.hoursLogged,
+      estimateHours: sql<number>`sum(${schema.estimates.estimateHours})`,
+      hoursLogged: sql<number>`sum(${schema.actuals.hoursLogged})`,
     })
     .from(schema.estimates)
     .innerJoin(
@@ -303,6 +308,7 @@ export async function listEstimationDrift(
     .innerJoin(schema.features, eq(schema.estimates.featureId, schema.features.id))
     .innerJoin(schema.projects, eq(schema.features.projectId, schema.projects.id))
     .where(projectScopeFilter(scope))
+    .groupBy(schema.projects.provider, schema.projects.repoId, schema.estimates.week)
     .orderBy(asc(schema.estimates.week));
 
   return rows.map((row) => ({

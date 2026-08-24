@@ -7,9 +7,9 @@ status: done
 priority: high
 owners: [earlrodsin@gmail.com]
 estimate_hours: 17
-hours_logged: 17
+hours_logged: 18
 created: 2026-08-19
-updated: 2026-08-19
+updated: 2026-08-24
 prd_ref: docs/PRD.md#6.5
 ---
 
@@ -51,6 +51,20 @@ todos already ships in `dashboard-cross-project`).
 - 2026-08-19 (@earlrodsin, 17h): implemented the three P0 report queries plus
   cross-project and per-project dashboard sections, format helper for
   hours/drift rounding, and a global.css layer; 81 tests passing repo-wide.
+- 2026-08-24 (@ecarino@jairosoft.com, 1h): Fixed a real production bug in
+  `listEstimationDrift` (`packages/db/src/queries.ts`), found from actual
+  dashboard output: the query never had a `GROUP BY` despite this file's
+  own AC-002 saying "per project... rolled up cross-project" — it returned
+  one row per *feature* per week, not one per *project* per week. On the
+  dashboard (`apps/web/src/app/page.tsx:98`) that meant every feature in a
+  project that week rendered as its own indistinguishable `<tr>`, all
+  sharing the identical React key `provider/repoId/week` — a real
+  duplicate-key bug, not just a confusing display. Added `sum()` +
+  `GROUP BY provider, repoId, week`; added a test proving two features in
+  the same project/week now sum into one row instead of two. No change
+  needed to the per-project drill-down page's `key={row.week}` or the
+  cross-project page's key — both were already correct once rows are
+  actually unique. `@isidore/db` 29/29, typecheck clean.
 
 ## Decisions & risks
 - Feature-completed-per-week counts first `done` transition only, per
@@ -61,6 +75,11 @@ todos already ships in `dashboard-cross-project`).
   feature's estimate changes mid-flight the drift series reflects that week's
   snapshot, not the original estimate — matches PRD.md §5.1 (estimates are
   point-in-time frontmatter, not immutable).
+- **Reopened 2026-08-24, same day, no status change.** AC-002's "rolled up"
+  wording was correct all along; the implementation just never matched it.
+  Marking [x] on that AC back in 2026-08-19 was premature — worth a habit
+  check: verify aggregation queries against a multi-row-per-key fixture,
+  not just the single-feature-per-week case the original test covered.
 - Shipped as plain HTML tables, not Recharts as originally scoped — the app
   had zero styling/charting before this feature, so pulling in a chart
   library for one trend line was scope creep for a first pass. Added

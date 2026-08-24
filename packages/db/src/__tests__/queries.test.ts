@@ -271,6 +271,36 @@ describe("listEstimationDrift", () => {
       },
     ]);
   });
+
+  it("sums across every feature into one row per project per week, not one row per feature", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    const secondFeature = { ...feature, feature_id: "second-feature" };
+
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W34", generated_at: "2026-08-18T09:00:00Z" },
+      { ...feature, estimate_hours: 8, hours_logged: 5.5 },
+    );
+    await writeFeatureSnapshot(
+      db,
+      { ...payload, week: "2026-W34", generated_at: "2026-08-18T09:00:00Z" },
+      { ...secondFeature, estimate_hours: 16, hours_logged: 0 },
+    );
+
+    const drift = await listEstimationDrift(db);
+
+    expect(drift).toEqual([
+      {
+        provider: "github",
+        repoId: "your-org/project-1",
+        week: "2026-W34",
+        estimateHours: 24,
+        hoursLogged: 5.5,
+        drift: -18.5,
+      },
+    ]);
+  });
 });
 
 describe("listDeveloperAllocation", () => {
