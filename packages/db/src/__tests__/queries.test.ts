@@ -117,7 +117,7 @@ describe("getProjectDetail", () => {
     expect(detail?.features[0]).toMatchObject({
       featureId: "auth-refresh",
       title: "Refresh token rotation",
-      status: "in-progress",
+      status: "implementing",
       estimateHours: 8,
       hoursLogged: 5.5,
       openPrs: [{ number: 412, state: "open" }],
@@ -184,7 +184,7 @@ describe("listFeaturesCompletedPerWeek", () => {
     );
 
     // Reopened and redone the following week — must not recount.
-    const reopenedFeature = { ...feature, status: "in-progress" as const };
+    const reopenedFeature = { ...feature, status: "implementing" as const };
     await writeFeatureSnapshot(
       db,
       { ...payload, week: "2026-W35", generated_at: "2026-08-25T09:00:00Z" },

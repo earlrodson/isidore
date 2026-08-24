@@ -56,21 +56,22 @@ on:
 
 | Case | Command |
 |---|---|
-| Scaffold `docs/features/` in a newly onboarded repo | `isi init` |
-| Dump open `docs/features/` items for any CLI coding agent | `isi context` |
+| Scaffold `docs/specifications/` in a newly onboarded repo | `isi init` |
+| Dump open `docs/specifications/` items for any CLI coding agent | `isi context` |
 | Backfill history on a newly onboarded repo | `isi push --week 2026-W30` |
 | Force re-send after CI outage or parser fix | `isi push --repo project-1 --week current` |
 | Preview payload before it goes live | `isi push --dry-run` |
 | Snapshot a long-lived feature branch early | `isi push --branch feature/x` |
 
 `isi init` copies the canonical `GUIDELINES.md` + `TEMPLATE-*.md` files bundled
-in the `isidore-worker` package into `docs/features/`, byte-identical to the
+in the `isidore-worker` package into `docs/specifications/`, byte-identical to the
 bundled copies, plus a `.isidore-templates.json` checksum manifest for a
 future `isi init --update` to detect drift. Refuses to overwrite an existing
-`docs/features/GUIDELINES.md` unless `--force` is passed.
+`docs/specifications/GUIDELINES.md` unless `--force` is passed.
 
-`isi context` prints every `docs/features/*.md` item with an open `status`
-(`planned`/`in-progress`/`blocked`) and at least one unchecked todo as a
+`isi context` prints every `docs/specifications/*.md` item with an open
+`status` (every stage except `done`/`removed`) and at least one unchecked
+todo as a
 self-contained markdown block (title, description, acceptance criteria,
 remaining todos only). `--id <slug>` scopes to one item. It's deliberately
 agent-agnostic — a plain stdout dump, not a Claude-specific integration —
@@ -128,7 +129,7 @@ The single most important interface in the system: both codebases depend on it, 
 
 ```json
 {
-  "payload_schema_version": "1.0",
+  "payload_schema_version": "1.3",
   "provider": "github",
   "repo_id": "your-org/project-1",
   "project": "project-1",
@@ -142,7 +143,7 @@ The single most important interface in the system: both codebases depend on it, 
       "feature_id": "auth-refresh",
       "title": "Refresh token rotation",
       "prd_ref": "docs/PRD.md#4.2",
-      "status": "in-progress",
+      "status": "implementing",
       "owners": ["dev-a"],
       "estimate_hours": 8,
       "hours_logged": 5.5,
@@ -157,13 +158,13 @@ The single most important interface in the system: both codebases depend on it, 
 ```
 
 **Rules:**
-- `payload_schema_version` on every payload — distinct from a feature file's own frontmatter `schema_version` (`docs/features/GUIDELINES.md`) — so the wire format can evolve without breaking workers that haven't been updated.
+- `payload_schema_version` on every payload — distinct from a feature file's own frontmatter `schema_version` (`docs/specifications/GUIDELINES.md`) — so the wire format can evolve without breaking workers that haven't been updated.
 - Idempotency key is `provider + repo_id + feature_id` — one row per feature ever; a later push overwrites, it never forks a new row per week.
 - Full snapshot per push, not a delta.
 - `timezone` is carried explicitly so "yesterday" is unambiguous.
 - Unknown `payload_schema_version` is rejected outright, never partially parsed.
 
-**Dependency:** `estimate_hours` and `hours_logged` must be structured frontmatter in the feature markdown (the latter derived from `## Daily log`, per `docs/features/GUIDELINES.md`, never hand-authored). If estimates stay free text, the P0 estimation reports cannot be built. This is the one authoring-convention change the team must commit to.
+**Dependency:** `estimate_hours` and `hours_logged` must be structured frontmatter in the feature markdown (the latter derived from `## Daily log`, per `docs/specifications/GUIDELINES.md`, never hand-authored). If estimates stay free text, the P0 estimation reports cannot be built. This is the one authoring-convention change the team must commit to.
 
 ## 7. Security
 

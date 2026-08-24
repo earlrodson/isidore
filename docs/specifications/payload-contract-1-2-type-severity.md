@@ -16,7 +16,7 @@ relates_to: [payload-contract-v1]
 ## Description
 `packages/isidore-worker/src/parser.ts` already parsed `type`
 (`feature`/`enabler`/`defect`/`spike`), `severity`, and `relates_to` out of
-`docs/features/<slug>.md` frontmatter, but the ingest payload contract
+`docs/specifications/<slug>.md` frontmatter, but the ingest payload contract
 never forwarded them — the worker read a defect or spike file just fine
 and then silently dropped what made it one before sending. This closes
 that gap without touching the frozen `payload-contract-v1.md` (per that
@@ -45,14 +45,14 @@ an additive bump rather than an edit to the frozen doc.
 - [x] Add `features` columns + migration, update `derive.ts`/`queries.ts` +
   tests (@ecarino@jairosoft.com, est 2h, due 2026-08-22, done 2026-08-22)
 - [x] Surface on the project detail page (@ecarino@jairosoft.com, est 1h, due 2026-08-22, done 2026-08-22)
-- [x] Backfill `docs/features/GUIDELINES.md` + `TEMPLATE-defect.md` +
+- [x] Backfill `docs/specifications/GUIDELINES.md` + `TEMPLATE-defect.md` +
   `TEMPLATE-spike.md` so the schema this bump exposes has authoring docs
   (@ecarino@jairosoft.com, est 1h, due 2026-08-22, done 2026-08-22)
 
 ## Daily log
 - 2026-08-22 (@ecarino, 6h): Evaluated rapidfire's `docs/specifications/`
   convention (GUIDELINES.md + type-specific templates) against isidore's
-  own `docs/features/`. Found `parser.ts` already implemented the richer
+  own `docs/specifications/`. Found `parser.ts` already implemented the richer
   schema (`type`/`severity`/`relates_to`) but isidore's own docs lacked
   the matching templates, and the payload contract/db/dashboard never
   forwarded those fields past the parser. Scaffolded the missing

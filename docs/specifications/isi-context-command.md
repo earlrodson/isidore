@@ -1,7 +1,7 @@
 ---
 schema_version: 1
 id: isi-context-command
-title: isi CLI — context command to dump open docs/features/ items for any agent
+title: isi CLI — context command to dump open docs/specifications/ items for any agent
 type: feature
 status: done
 priority: medium
@@ -14,9 +14,9 @@ relates_to: [isi-cli-init]
 ---
 
 ## Description
-Onboarded repos accumulate `docs/features/*.md` items, but asking an
+Onboarded repos accumulate `docs/specifications/*.md` items, but asking an
 assistant to "implement our remaining tasks" had no reliable way to find
-them — it isn't bound to any convention pointing at `docs/features/`, and
+them — it isn't bound to any convention pointing at `docs/specifications/`, and
 guessed at TODO comments, issues, or the wrong folder instead. `isi context`
 closes that gap with a plain stdout command, not a Claude-specific
 integration: it prints every open item (status `planned`/`in-progress`/
@@ -24,7 +24,7 @@ integration: it prints every open item (status `planned`/`in-progress`/
 block, so it composes with any CLI coding agent via a pipe.
 
 ## Acceptance criteria
-- [x] `isi context` prints every open `docs/features/*.md` item's title,
+- [x] `isi context` prints every open `docs/specifications/*.md` item's title,
       type/status/priority, description, acceptance criteria, and only its
       unchecked todos
 - [x] Closed items (`done`/`cancelled`, or no remaining todos) are excluded
@@ -47,7 +47,7 @@ block, so it composes with any CLI coding agent via a pipe.
   Description/Acceptance criteria sections; added `context.test.ts` and two
   new `parser.test.ts` cases; updated TECHSTACK.md §3.1. `pnpm --filter
   @isidore/worker typecheck/test/build` all clean (46 tests passing);
-  smoke-tested the built CLI against isidore's own `docs/features/`.
+  smoke-tested the built CLI against isidore's own `docs/specifications/`.
 
 ## Decisions & risks
 - Deliberately not Claude-specific: output is plain markdown to stdout, no

@@ -17,7 +17,7 @@ relates_to: [payload-contract-v1, ingest-endpoint-hmac]
 
 ## Description
 Build the `isidore-worker` core pipeline (TECHSTACK.md §3): checkout and
-parse `docs/features/*.md` → enrich from git → build versioned snapshot →
+parse `docs/specifications/*.md` → enrich from git → build versioned snapshot →
 HMAC sign and POST with retry. GitHub Actions only for v1 (TECHSTACK.md §5).
 Build order step 4 (TECHSTACK.md §8).
 
@@ -26,7 +26,7 @@ Build order step 4 (TECHSTACK.md §8).
       function, per TECHSTACK.md §3.1's single-core-function design
 - [x] `src/ci-entry.ts` is a thin wrapper calling `core.ts` directly, no
       logic duplicated between CI and any future CLI entry point
-- [x] Parser follows `docs/features/GUIDELINES.md` exactly: `type` from
+- [x] Parser follows `docs/specifications/GUIDELINES.md` exactly: `type` from
       frontmatter only, `hours_logged` computed from `## Daily log` (never
       read from frontmatter as authored), todos parsed via the fixed
       `- [ ] ... (@owner, est Nh, due YYYY-MM-DD)` line format
@@ -41,7 +41,7 @@ Build order step 4 (TECHSTACK.md §8).
       (TECHSTACK.md §3.1)
 
 ## Todos
-- [x] Implement `docs/features/*.md` frontmatter + section parser (@earlrodsin@gmail.com, est 5h, due 2026-08-19, done 2026-08-19)
+- [x] Implement `docs/specifications/*.md` frontmatter + section parser (@earlrodsin@gmail.com, est 5h, due 2026-08-19, done 2026-08-19)
 - [x] Implement git enrichment (commits, PR state, assignees) (@earlrodsin@gmail.com, est 4h, due 2026-08-19, done 2026-08-19)
 - [x] Implement HMAC sign + POST with retry (@earlrodsin@gmail.com, est 3h, due 2026-08-19, done 2026-08-19)
 - [x] Write `src/ci-entry.ts` + example GitHub Actions workflow (@earlrodsin@gmail.com, est 2h, due 2026-08-19, done 2026-08-19)
@@ -55,14 +55,14 @@ Build order step 4 (TECHSTACK.md §8).
   (frontmatter's authored value is never trusted). Handles word-wrapped
   continuation lines within a single todo/log entry. `isFeatureFile()`
   excludes `GUIDELINES.md`/`TEMPLATE-*.md` per the Report tooling notes.
-  10 tests passing (fixtures copied from real docs/features files plus
+  10 tests passing (fixtures copied from real docs/specifications files plus
   synthetic malformed-line and due/done-date cases).
 - 2026-08-19 (@earlrodsin@gmail.com, 3h): added `src/git.ts` —
   `getHeadCommitSha()` for the payload's top-level `commit_sha` (local
   `git rev-parse HEAD`, no API call, per TECHSTACK.md §1's "full checkout"
   rationale), plus `enrichOpenPrsByFeature()` against the GitHub REST API
   (open PRs → their changed files → matched to whichever feature's
-  `docs/features/<id>.md` the PR touches). This is the "open PR visibility"
+  `docs/specifications/<id>.md` the PR touches). This is the "open PR visibility"
   heuristic PRD.md §5.3 requires so in-progress work on unmerged branches
   isn't invisible. `fetchImpl` is injected so tests mock the network
   instead of hitting GitHub. Owners/assignees are not re-derived here —
@@ -105,7 +105,7 @@ Build order step 4 (TECHSTACK.md §8).
 - Depends on [[payload-contract-v1]] and [[ingest-endpoint-hmac]] existing
   (or at minimum a fixture-validated contract) to test against end-to-end.
 - Open-PR matching is heuristic: a PR counts as touching a feature only if
-  its diff includes `docs/features/<id>.md` itself. This covers planning-doc
+  its diff includes `docs/specifications/<id>.md` itself. This covers planning-doc
   PRs (PRD.md §5.2) and any PR whose author also updates the Daily log, but
   won't catch an implementation PR that never touches the feature file. Not
   currently required by the payload contract's `open_prs` field beyond

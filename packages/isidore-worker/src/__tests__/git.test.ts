@@ -89,7 +89,7 @@ describe("fetchPullRequestFiles", () => {
   it("returns just the changed filenames", async () => {
     const fetchImpl = vi.fn().mockResolvedValue(
       jsonResponse([
-        { filename: "docs/features/auth-refresh.md" },
+        { filename: "docs/specifications/auth-refresh.md" },
         { filename: "src/auth.ts" },
       ]),
     );
@@ -100,7 +100,7 @@ describe("fetchPullRequestFiles", () => {
     );
 
     expect(files).toEqual([
-      "docs/features/auth-refresh.md",
+      "docs/specifications/auth-refresh.md",
       "src/auth.ts",
     ]);
     expect(fetchImpl).toHaveBeenCalledWith(
@@ -121,7 +121,7 @@ describe("enrichOpenPrsByFeature", () => {
       }
       if (url.endsWith("/pulls/412/files?per_page=100")) {
         return jsonResponse([
-          { filename: "docs/features/auth-refresh.md" },
+          { filename: "docs/specifications/auth-refresh.md" },
           { filename: "src/auth.ts" },
         ]);
       }

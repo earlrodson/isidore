@@ -3,13 +3,14 @@ import { z } from "zod";
 /**
  * Snapshot payload the worker POSTs to the ingest endpoint.
  * Shape is pinned by TECHSTACK.md §6 — do not change without updating
- * docs/features/payload-contract-v1.md and every consumer of this schema.
+ * docs/specifications/payload-contract-v1.md and every consumer of this
+ * schema.
  *
  * Idempotency key: `provider + repo_id + feature_id` — one row per feature
  * ever; a later push overwrites, it never forks a new row per week.
  */
 
-export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2"] as const;
+export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3"] as const;
 
 export const ProviderSchema = z.enum([
   "github",
@@ -18,20 +19,32 @@ export const ProviderSchema = z.enum([
   "azure_repos",
 ]);
 
+/**
+ * docs/specifications/GUIDELINES.md — the item's lifecycle stage. Replaced
+ * outright (not additively) in "1.3" to adopt the shared cross-project
+ * convention's stage-based enum; "1.0"–"1.2" senders used the old
+ * `planned | in-progress | blocked | done | cancelled` set and must upgrade
+ * to send "1.3".
+ */
 export const FeatureStatusSchema = z.enum([
-  "planned",
-  "in-progress",
-  "blocked",
+  "new",
+  "analyzing",
+  "ready",
+  "implementing",
+  "validating",
+  "deploying",
+  "releasing",
   "done",
-  "cancelled",
+  "removed",
+  "blocked",
 ]);
 
 export const OpenPrStateSchema = z.enum(["open", "closed", "merged"]);
 
 /**
- * docs/features/feature-environment-tracking.md — furthest environment a
+ * docs/specifications/feature-environment-tracking.md — furthest environment a
  * feature's last-seen commit has reached, via ancestry against staging/main
- * tips (never by re-parsing docs/features/ off those branches, per PRD.md
+ * tips (never by re-parsing docs/specifications/ off those branches, per PRD.md
  * §5.2's addendum). `null`/absent means it couldn't be determined (e.g. no
  * staging/main branch configured) — added in "1.1", optional so "1.0"
  * payloads without it still validate.
@@ -39,8 +52,8 @@ export const OpenPrStateSchema = z.enum(["open", "closed", "merged"]);
 export const EnvironmentSchema = z.enum(["develop", "staging", "production"]);
 
 /**
- * docs/features/GUIDELINES.md — the item's kind, parsed from
- * `docs/features/<slug>.md` frontmatter's `type` key. `feature`/`enabler`
+ * docs/specifications/GUIDELINES.md — the item's kind, parsed from
+ * `docs/specifications/<slug>.md` frontmatter's `type` key. `feature`/`enabler`
  * are the common case; `defect`/`spike` carry `severity`/`timebox_hours`
  * instead of `priority`/`estimate_hours` in the source file, but always
  * arrive here as a `feature` shape once the worker normalizes them. Added
@@ -49,7 +62,7 @@ export const EnvironmentSchema = z.enum(["develop", "staging", "production"]);
 export const FeatureTypeSchema = z.enum(["feature", "enabler", "defect", "spike"]);
 
 /**
- * docs/features/GUIDELINES.md — `defect` frontmatter's `severity` key,
+ * docs/specifications/GUIDELINES.md — `defect` frontmatter's `severity` key,
  * carried through only when `type` is `defect`. Added in "1.2", optional.
  */
 export const SeveritySchema = z.enum(["low", "medium", "high", "critical"]);

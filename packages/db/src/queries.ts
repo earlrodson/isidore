@@ -16,7 +16,7 @@ export interface ProjectSummary {
 
 /**
  * "Stale" is open + `due` in the past — the same heuristic GUIDELINES.md
- * uses for "today's overdue work" (docs/features/dashboard-cross-project.md
+ * uses for "today's overdue work" (docs/specifications/dashboard-cross-project.md
  * decision log), reused here rather than redefined.
  */
 function staleTodoFilter() {
@@ -24,7 +24,7 @@ function staleTodoFilter() {
 }
 
 /**
- * Cross-project summary rollup (docs/features/dashboard-cross-project.md).
+ * Cross-project summary rollup (docs/specifications/dashboard-cross-project.md).
  * Every number is a query over the normalized tables — never a re-parse of
  * `snapshots.raw` (TECHSTACK.md §4.2).
  */
@@ -110,7 +110,7 @@ export interface ProjectDetail {
 }
 
 /**
- * Per-project detail (docs/features/dashboard-cross-project.md), keyed on
+ * Per-project detail (docs/specifications/dashboard-cross-project.md), keyed on
  * `provider + repo_id` per the ingest contract's idempotency key
  * (TECHSTACK.md §6). Returns `null` when the project isn't onboarded at all,
  * distinct from an onboarded project with zero features.
@@ -222,7 +222,7 @@ export interface FeaturesCompletedPerWeek {
 /**
  * A feature counts once, in the week it first flipped to `done` — later weeks
  * where it stays done (or is reopened and redone) don't recount it
- * (docs/features/p0-reports.md decision log).
+ * (docs/specifications/p0-reports.md decision log).
  */
 export async function listFeaturesCompletedPerWeek(
   db: Tx,
@@ -281,7 +281,7 @@ export interface EstimationDriftPoint {
  * Estimate vs actual per feature per week, joined on the append-only
  * `estimates`/`actuals` history (schema.ts) so a mid-flight re-estimate shows
  * up as that week's drift rather than being reconciled against the original
- * estimate (docs/features/p0-reports.md decision log).
+ * estimate (docs/specifications/p0-reports.md decision log).
  */
 export async function listEstimationDrift(
   db: Tx,
@@ -320,7 +320,7 @@ export interface DeveloperAllocation {
 /**
  * Open (not done) todo count and summed estimate hours per assignee, across
  * every project in scope. Reflects current backlog load, not historical
- * throughput (docs/features/p0-reports.md).
+ * throughput (docs/specifications/p0-reports.md).
  */
 export async function listDeveloperAllocation(
   db: Tx,

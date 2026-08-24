@@ -6,7 +6,7 @@ schema_version: 1
 id: auth-refresh
 title: Refresh token rotation
 type: feature
-status: in-progress
+status: implementing
 priority: high
 prd_ref: docs/PRD.md#4.2
 owners: [dev-a]
@@ -45,7 +45,7 @@ const baseParams = {
   project: "project-1",
   baseBranch: "develop",
   timezone: "Asia/Manila",
-  featuresDir: "docs/features",
+  featuresDir: "docs/specifications",
   owner: "acme",
   repo: "project-1",
   githubToken: "gh-token",
@@ -98,7 +98,7 @@ describe("buildSnapshot", () => {
       ],
     });
 
-    expect(payload.payload_schema_version).toBe("1.2");
+    expect(payload.payload_schema_version).toBe("1.3");
     expect(payload.features[0].type).toBe("defect");
     expect(payload.features[0].severity).toBe("high");
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);

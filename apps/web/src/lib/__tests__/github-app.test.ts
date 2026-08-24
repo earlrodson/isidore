@@ -91,21 +91,21 @@ describe("featuresFolderExists", () => {
   it("returns false on a 404 (folder not scaffolded yet)", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
     expect(
-      await featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/features" }),
+      await featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/specifications" }),
     ).toBe(false);
   });
 
   it("returns true when GUIDELINES.md is found", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200 }));
     expect(
-      await featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/features" }),
+      await featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/specifications" }),
     ).toBe(true);
   });
 
   it("throws on an unexpected error status", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 500 }));
     await expect(
-      featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/features" }),
+      featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/specifications" }),
     ).rejects.toThrow("500");
   });
 });

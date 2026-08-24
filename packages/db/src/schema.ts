@@ -84,12 +84,12 @@ export const features = pgTable(
     estimateHours: doublePrecision("estimate_hours").notNull(),
     hoursLogged: doublePrecision("hours_logged").notNull(),
     openPrs: jsonb("open_prs").notNull(),
-    // docs/features/feature-environment-tracking.md — furthest environment
+    // docs/specifications/feature-environment-tracking.md — furthest environment
     // this feature's last-seen commit has reached (develop/staging/
-    // production), via commit-ancestry, not by re-parsing docs/features/ off
+    // production), via commit-ancestry, not by re-parsing docs/specifications/ off
     // other branches. Null when undetermined (e.g. no staging/main branch).
     environment: text("environment"),
-    // payload contract 1.2 (docs/features/payload-contract-v1-2-type-severity.md)
+    // payload contract 1.2 (docs/specifications/payload-contract-v1-2-type-severity.md)
     // — the item's kind and, for defects, severity + the slugs it relates
     // to. Null for pre-1.2 senders that never set them.
     type: text("type"),
@@ -241,7 +241,7 @@ export const repoSecrets = pgTable(
 );
 
 /**
- * Onboarding identity (docs/features/onboarding-oauth.md). Deliberately
+ * Onboarding identity (docs/specifications/onboarding-oauth.md). Deliberately
  * disjoint from `repoSecrets`/ingest: this is the first auth surface in the
  * app, kept minimal per PRD open question #2 (org-wide read for v1, no
  * per-project ACL) rather than over-building roles ahead of need.
@@ -312,7 +312,7 @@ export const sessions = pgTable("sessions", {
 
 /**
  * A GitHub App installation the user connected during onboarding
- * (docs/features/onboarding-oauth.md AC-002/003). Repo access comes from
+ * (docs/specifications/onboarding-oauth.md AC-002/003). Repo access comes from
  * this installation's grant, not from browsing everything the user can
  * see on GitHub.
  */

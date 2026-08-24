@@ -2,17 +2,27 @@ import { loadFeatureFiles } from "./core.js";
 import { parseFeatureFile, type FeatureTodo, type ParsedFeatureFile } from "./parser.js";
 
 /**
- * `isi context` (TECHSTACK.md §3.1): dumps open docs/features/ items as a
- * self-contained markdown blob on stdout, so any CLI-based coding agent
- * (not just Claude) can be pointed at "the remaining work" via a plain
- * pipe, e.g. `isi context | claude -p "implement the above"`.
+ * `isi context` (TECHSTACK.md §3.1): dumps open docs/specifications/ items
+ * as a self-contained markdown blob on stdout, so any CLI-based coding
+ * agent (not just Claude) can be pointed at "the remaining work" via a
+ * plain pipe, e.g. `isi context | claude -p "implement the above"`.
  */
 
-const OPEN_STATUSES = new Set(["planned", "in-progress", "blocked"]);
+// Every lifecycle stage except the two terminal ones (GUIDELINES.md rule 4).
+const OPEN_STATUSES = new Set([
+  "new",
+  "analyzing",
+  "ready",
+  "implementing",
+  "validating",
+  "deploying",
+  "releasing",
+  "blocked",
+]);
 
 export class UnknownFeatureIdError extends Error {
   constructor(id: string) {
-    super(`No docs/features/ item with id "${id}"`);
+    super(`No docs/specifications/ item with id "${id}"`);
     this.name = "UnknownFeatureIdError";
   }
 }
@@ -88,7 +98,7 @@ export function buildContext(params: BuildContextParams): string {
   );
 
   if (open.length === 0) {
-    return "No remaining todos across docs/features/*.md.";
+    return "No remaining todos across docs/specifications/*.md.";
   }
 
   return open.map(formatItem).join("\n\n---\n\n");

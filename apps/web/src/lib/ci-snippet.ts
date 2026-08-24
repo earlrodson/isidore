@@ -13,7 +13,7 @@ export interface CiSnippetParams {
  * Downloads the prebuilt `isidore-worker` tarball from a GitHub Release
  * (`gh release download`) and runs it via `npx --package=<tarball>` — no
  * checkout of isidore's source, no monorepo build step in the consumer's
- * job. This is what resolves AC-006 (docs/features/onboarding-oauth.md);
+ * job. This is what resolves AC-006 (docs/specifications/onboarding-oauth.md);
  * see `packages/isidore-worker/scripts/prepare-release.mjs` for how the
  * tarball itself is assembled (esbuild-bundles `@isidore/shared` in, so
  * the published package has no `workspace:*` reference to resolve).
@@ -26,13 +26,13 @@ export interface CiSnippetParams {
  */
 export function buildGithubActionsWorkflow({
   ingestEndpoint,
-  featuresDir = "docs/features",
+  featuresDir = "docs/specifications",
   baseBranch = "develop",
   stagingBranch,
   productionBranch,
 }: CiSnippetParams): string {
   const sourceRepo = process.env.ISIDORE_SOURCE_REPO ?? DEFAULT_SOURCE_REPO;
-  // docs/features/feature-environment-tracking.md AC-003 — only emitted when
+  // docs/specifications/feature-environment-tracking.md AC-003 — only emitted when
   // the user overrides them on /onboarding; unset lets the worker fall back
   // to its own defaults (staging / main-then-master).
   const environmentBranchEnv = [

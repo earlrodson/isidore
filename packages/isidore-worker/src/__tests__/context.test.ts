@@ -18,7 +18,7 @@ describe("buildContext", () => {
   it("includes only items with an open status and remaining todos", () => {
     const output = buildContext({ featuresDir: "unused", loadFeatures });
 
-    // isi-cli-init.md is `status: planned` with open todos.
+    // isi-cli-init.md is `status: new` with open todos.
     expect(output).toContain("isi CLI — init command");
     // ingest-endpoint-hmac.md is `status: done` — excluded.
     expect(output).not.toContain("ingest-endpoint-hmac");
@@ -58,6 +58,6 @@ describe("buildContext", () => {
       ],
     });
 
-    expect(output).toBe("No remaining todos across docs/features/*.md.");
+    expect(output).toBe("No remaining todos across docs/specifications/*.md.");
   });
 });

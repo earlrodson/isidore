@@ -7,7 +7,7 @@ import { githubAppSlug } from "@/lib/github-app";
 const STATE_COOKIE = "isidore_install_state";
 
 /** Redirects to GitHub's own installation picker, letting the user connect
- * repos from any account/org they belong to (docs/features/onboarding-oauth.md
+ * repos from any account/org they belong to (docs/specifications/onboarding-oauth.md
  * — a user can call this more than once to add another account). */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();

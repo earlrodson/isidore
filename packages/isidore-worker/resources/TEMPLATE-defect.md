@@ -3,7 +3,7 @@ schema_version: 1
 id: defect-slug
 title: Defect title
 type: defect
-status: planned
+status: new
 severity: medium
 owners: [handle]
 estimate_hours: 0

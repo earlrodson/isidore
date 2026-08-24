@@ -16,7 +16,7 @@ const fixture = (name: string) =>
 describe("isFeatureFile", () => {
   it("excludes GUIDELINES.md", () => {
     expect(isFeatureFile("GUIDELINES.md")).toBe(false);
-    expect(isFeatureFile("docs/features/GUIDELINES.md")).toBe(false);
+    expect(isFeatureFile("docs/specifications/GUIDELINES.md")).toBe(false);
   });
 
   it("excludes TEMPLATE-*.md", () => {
@@ -26,12 +26,12 @@ describe("isFeatureFile", () => {
 
   it("includes a real item file", () => {
     expect(isFeatureFile("ingest-endpoint-hmac.md")).toBe(true);
-    expect(isFeatureFile("docs/features/ingest-endpoint-hmac.md")).toBe(true);
+    expect(isFeatureFile("docs/specifications/ingest-endpoint-hmac.md")).toBe(true);
   });
 
   it("excludes the scaffold's non-.md manifest file", () => {
     expect(isFeatureFile(".isidore-templates.json")).toBe(false);
-    expect(isFeatureFile("docs/features/.isidore-templates.json")).toBe(false);
+    expect(isFeatureFile("docs/specifications/.isidore-templates.json")).toBe(false);
   });
 });
 
@@ -70,10 +70,10 @@ describe("parseFeatureFile", () => {
     expect(parsed.hoursLogged).toBe(7);
   });
 
-  it("parses a planned item with no done todos yet", () => {
+  it("parses a new item with no done todos yet", () => {
     const parsed = parseFeatureFile(fixture("isi-cli-init.md"));
 
-    expect(parsed.frontmatter.status).toBe("planned");
+    expect(parsed.frontmatter.status).toBe("new");
     expect(parsed.todos.every((t) => t.done === false)).toBe(true);
     expect(parsed.hoursLogged).toBe(0);
   });
@@ -93,7 +93,7 @@ schema_version: 1
 id: no-sections
 title: No sections
 type: feature
-status: planned
+status: new
 owners: [handle]
 estimate_hours: 0
 hours_logged: 0
@@ -122,7 +122,7 @@ schema_version: 1
 id: bad
 title: Bad
 type: feature
-status: planned
+status: new
 owners: [a]
 created: 2026-08-18
 updated: 2026-08-18
@@ -143,7 +143,7 @@ schema_version: 1
 id: bad
 title: Bad
 type: feature
-status: planned
+status: new
 owners: [a]
 created: 2026-08-18
 updated: 2026-08-18

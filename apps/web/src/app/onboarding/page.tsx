@@ -60,7 +60,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
           Scaffold PR opened: <a href={params.pr}>{params.pr}</a>
         </p>
       )}
-      {params.scaffolded === "exists" && <p>docs/features/ already exists in that repo.</p>}
+      {params.scaffolded === "exists" && <p>docs/specifications/ already exists in that repo.</p>}
       {params.error && <p>Error: {params.error}</p>}
 
       <p>
@@ -96,9 +96,9 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                         <input type="hidden" name="repo" value={repoName} />
                         <label>
                           Folder{" "}
-                          <input type="text" name="path" defaultValue="docs/features" />
+                          <input type="text" name="path" defaultValue="docs/specifications" />
                         </label>
-                        <button type="submit">Scaffold docs/features/</button>
+                        <button type="submit">Scaffold docs/specifications/</button>
                       </form>
                       <form action="/api/onboarding/secret" method="POST">
                         <input type="hidden" name="owner" value={owner} />
@@ -132,7 +132,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                         <summary>CI snippet (.github/workflows/isidore-worker.yml)</summary>
                         <p>
                           Still builds isidore-worker from source in your job — see AC-006 in
-                          docs/features/onboarding-oauth.md. Fill in the secret from the button
+                          docs/specifications/onboarding-oauth.md. Fill in the secret from the button
                           above as the <code>ISIDORE_HMAC_SECRET</code> repo secret. Leave the
                           branch names above blank to use the worker&apos;s defaults (staging /
                           main, falling back to master).

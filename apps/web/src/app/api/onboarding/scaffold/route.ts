@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/current-user";
 import { getDb } from "@/lib/db";
 import { featuresFolderExists, scaffoldFeaturesFolderAsPullRequest } from "@/lib/github-app";
 
-/** AC-003: scaffolds docs/features/ on a new repo by reusing the same
+/** AC-003: scaffolds docs/specifications/ on a new repo by reusing the same
  * canonical file source as `isi init`, committed via the GitHub API as a
  * PR the user merges themselves rather than a direct commit. */
 export async function POST(request: NextRequest): Promise<NextResponse> {

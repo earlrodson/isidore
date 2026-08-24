@@ -3,7 +3,7 @@ schema_version: 1
 id: spike-slug
 title: Spike title
 type: spike
-status: planned
+status: new
 priority: medium
 owners: [handle]
 timebox_hours: 0

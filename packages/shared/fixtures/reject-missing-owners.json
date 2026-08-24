@@ -13,7 +13,7 @@
       "feature_id": "auth-refresh",
       "title": "Refresh token rotation",
       "prd_ref": "docs/PRD.md#4.2",
-      "status": "planned",
+      "status": "new",
       "owners": [],
       "estimate_hours": 8,
       "hours_logged": 0,

@@ -21,7 +21,7 @@ had to know about them. That's still correct for *planning*, but it leaves
 a real gap: nothing today tells you whether a feature marked `done` on
 develop has actually been promoted anywhere. This adds a per-feature
 environment signal — develop / staging / production — computed from commit
-ancestry, not from re-reading `docs/features/` off other branches (which
+ancestry, not from re-reading `docs/specifications/` off other branches (which
 would conflict with §5.2's "plans only live on develop" design).
 
 ## Acceptance criteria
@@ -29,7 +29,7 @@ would conflict with §5.2's "plans only live on develop" design).
   environment its most-recently-seen commit (`snapshots.commit_sha` for
   that feature) has reached, by checking commit ancestry against the
   repo's staging and production branch tips — not by re-parsing
-  `docs/features/` on those branches.
+  `docs/specifications/` on those branches.
 - [x] AC-002 — Ancestry is computed via the GitHub compare API
   (`GET /repos/{owner}/{repo}/compare/{branch}...{sha}`), reusing the
   worker's existing `githubToken` (no new permissions/secrets) — same
@@ -44,7 +44,7 @@ would conflict with §5.2's "plans only live on develop" design).
   existing "1.0" payloads without it still validate.
 - [x] AC-005 — The normalized `features` table and dashboard surface this
   per feature (e.g. a develop/staging/production badge), without changing
-  how `docs/features/` itself is parsed or where plans are authored.
+  how `docs/specifications/` itself is parsed or where plans are authored.
 - [x] AC-006 — A repo whose staging/main branches don't exist (or aren't
   configured) degrades to `environment: null` per feature, never a hard
   ingest failure — this must not block existing onboarded repos.
@@ -68,7 +68,7 @@ would conflict with §5.2's "plans only live on develop" design).
   branch a feature is currently at (develop/staging/main/production)".
   Clarified two open design questions with the user before scoping:
   (1) signal is commit-ancestry against staging/main tips, not re-parsing
-  docs/features/ off those branches (which would conflict with PRD §5.2);
+  docs/specifications/ off those branches (which would conflict with PRD §5.2);
   (2) granularity is per-feature, not per-repo, so the dashboard can show
   e.g. "auth-refresh is in staging, payments-v2 hasn't shipped to prod"
   on the same project.
@@ -139,7 +139,7 @@ would conflict with §5.2's "plans only live on develop" design).
 ## Decisions & risks
 - **Ancestry, not re-parsed plans, is the signal — by design.** PRD §5.2
   chose `develop` as the only planning source specifically because
-  staging/main lag reality; re-reading `docs/features/` off those branches
+  staging/main lag reality; re-reading `docs/specifications/` off those branches
   would just reintroduce the staleness problem §5.2 already rejected.
   Checking whether a feature's last-seen commit is an ancestor of
   staging/main's tip answers "has this shipped" without touching that

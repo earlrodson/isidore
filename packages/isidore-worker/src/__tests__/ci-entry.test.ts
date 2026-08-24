@@ -47,7 +47,7 @@ describe("ci-entry main", () => {
         project: "project-1",
         baseBranch: "develop",
         timezone: "UTC",
-        featuresDir: "docs/features",
+        featuresDir: "docs/specifications",
         owner: "acme",
         repo: "project-1",
         githubToken: "gh-token",

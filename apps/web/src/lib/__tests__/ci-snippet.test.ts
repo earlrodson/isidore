@@ -21,7 +21,7 @@ describe("buildGithubActionsWorkflow", () => {
   it("defaults featuresDir and baseBranch, honors overrides", () => {
     const defaults = buildGithubActionsWorkflow({ ingestEndpoint: "https://x/api/ingest" });
     expect(defaults).toContain("branches: [develop]");
-    expect(defaults).toContain("ISIDORE_FEATURES_DIR: docs/features");
+    expect(defaults).toContain("ISIDORE_FEATURES_DIR: docs/specifications");
 
     const overridden = buildGithubActionsWorkflow({
       ingestEndpoint: "https://x/api/ingest",

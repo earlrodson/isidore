@@ -1,9 +1,9 @@
 ---
 schema_version: 1
 id: isi-cli-init
-title: isi CLI — init command to scaffold docs/features/ in a new repo
+title: isi CLI — init command to scaffold docs/specifications/ in a new repo
 type: feature
-status: planned
+status: new
 priority: high
 owners: [earlrodsin@gmail.com]
 estimate_hours: 5
@@ -17,7 +17,7 @@ relates_to: [worker-parse-push-github]
 
 ## Description
 Add `isi init` alongside `isi push` (TECHSTACK.md §3.1) so onboarding a new
-repo scaffolds `docs/features/{GUIDELINES.md,TEMPLATE-feature.md,
+repo scaffolds `docs/specifications/{GUIDELINES.md,TEMPLATE-feature.md,
 TEMPLATE-defect.md,TEMPLATE-spike.md}` from copies bundled in the
 `isidore-worker` package, instead of requiring a human to hand-copy them.
 Closes the gap in onboarding (PRD.md §6.1), which currently assumes the
@@ -26,10 +26,10 @@ folder convention already exists. Priority: immediately after
 can't be self-serve without it.
 
 ## Acceptance criteria
-- [ ] `isi init` creates `docs/features/` with `GUIDELINES.md` and all three
+- [ ] `isi init` creates `docs/specifications/` with `GUIDELINES.md` and all three
       `TEMPLATE-*.md` files, byte-identical to the canonical copies bundled
       in the `isidore-worker` package
-- [ ] Refuses to overwrite an existing `docs/features/GUIDELINES.md` without
+- [ ] Refuses to overwrite an existing `docs/specifications/GUIDELINES.md` without
       an explicit `--force` (or equivalent) flag, to avoid clobbering a
       repo's in-progress items or local guideline edits
 - [ ] `isi init` is documented in the same CLI help/table as `isi push` in

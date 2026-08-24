@@ -1,7 +1,7 @@
 ---
 schema_version: 1
 id: isi-cli-init
-title: isi CLI — init command to scaffold docs/features/ in a new repo
+title: isi CLI — init command to scaffold docs/specifications/ in a new repo
 type: feature
 status: done
 priority: high
@@ -17,7 +17,7 @@ relates_to: [worker-parse-push-github]
 
 ## Description
 Add `isi init` alongside `isi push` (TECHSTACK.md §3.1) so onboarding a new
-repo scaffolds `docs/features/{GUIDELINES.md,TEMPLATE-feature.md,
+repo scaffolds `docs/specifications/{GUIDELINES.md,TEMPLATE-feature.md,
 TEMPLATE-defect.md,TEMPLATE-spike.md}` from copies bundled in the
 `isidore-worker` package, instead of requiring a human to hand-copy them.
 Closes the gap in onboarding (PRD.md §6.1), which currently assumes the
@@ -26,10 +26,10 @@ folder convention already exists. Priority: immediately after
 can't be self-serve without it.
 
 ## Acceptance criteria
-- [x] `isi init` creates `docs/features/` with `GUIDELINES.md` and all three
+- [x] `isi init` creates `docs/specifications/` with `GUIDELINES.md` and all three
       `TEMPLATE-*.md` files, byte-identical to the canonical copies bundled
       in the `isidore-worker` package
-- [x] Refuses to overwrite an existing `docs/features/GUIDELINES.md` without
+- [x] Refuses to overwrite an existing `docs/specifications/GUIDELINES.md` without
       an explicit `--force` (or equivalent) flag, to avoid clobbering a
       repo's in-progress items or local guideline edits
 - [x] `isi init` is documented in the same CLI help/table as `isi push` in
@@ -48,7 +48,7 @@ can't be self-serve without it.
 - 2026-08-19 (@earlrodsin@gmail.com, 5h): added `packages/isidore-worker/resources/`
   (byte-identical copies of `GUIDELINES.md` + all three `TEMPLATE-*.md`),
   `src/scaffold.ts` (`initFeaturesFolder()` — copies the bundled files into
-  a repo's `docs/features/`, refuses to overwrite an existing
+  a repo's `docs/specifications/`, refuses to overwrite an existing
   `GUIDELINES.md` unless `force: true`, and writes a sha256
   `.isidore-templates.json` checksum manifest alongside them so a future
   `isi init --update` can detect drift without touching the byte-identical

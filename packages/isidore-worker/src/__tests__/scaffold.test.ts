@@ -48,7 +48,7 @@ describe("readCanonicalTemplateFiles", () => {
   });
 
   it("writes nothing to disk", () => {
-    const destDir = join(mkdtempSync(join(tmpdir(), "isidore-read-")), "docs", "features");
+    const destDir = join(mkdtempSync(join(tmpdir(), "isidore-read-")), "docs", "specifications");
     readCanonicalTemplateFiles();
     expect(() => readFileSync(join(destDir, "GUIDELINES.md"))).toThrow();
   });
@@ -58,14 +58,14 @@ describe("initFeaturesFolder", () => {
   let destDir: string;
 
   beforeEach(() => {
-    destDir = join(mkdtempSync(join(tmpdir(), "isidore-init-")), "docs", "features");
+    destDir = join(mkdtempSync(join(tmpdir(), "isidore-init-")), "docs", "specifications");
   });
 
   afterEach(() => {
     rmSync(destDir, { recursive: true, force: true });
   });
 
-  it("scaffolds docs/features/ byte-identical to the bundled canonical copies", () => {
+  it("scaffolds docs/specifications/ byte-identical to the bundled canonical copies", () => {
     const result = initFeaturesFolder({ destDir });
 
     expect(result.filesWritten).toEqual([

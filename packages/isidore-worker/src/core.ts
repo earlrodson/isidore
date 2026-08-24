@@ -23,7 +23,7 @@ export interface FeatureFileSource {
   content: string;
 }
 
-/** Real filesystem read of `docs/features/*.md`, split out so tests can inject fixtures instead. */
+/** Real filesystem read of `docs/specifications/*.md`, split out so tests can inject fixtures instead. */
 export function loadFeatureFiles(featuresDir: string): FeatureFileSource[] {
   return readdirSync(featuresDir)
     .filter(isFeatureFile)
@@ -122,7 +122,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const generatedAt = new Date(now());
 
   return parseIngestPayload({
-    payload_schema_version: "1.2",
+    payload_schema_version: "1.3",
     provider: params.provider,
     repo_id: params.repoId,
     project: params.project,

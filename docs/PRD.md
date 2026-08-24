@@ -77,7 +77,7 @@ Every parseable file (i.e. every file except `GUIDELINES.md` and
 id: <slug>
 title: <human title>
 type: feature | enabler | defect | spike
-status: planned | in-progress | blocked | done | cancelled
+status: new | analyzing | ready | implementing | validating | deploying | releasing | done | removed | blocked
 priority: low | medium | high        # defect uses `severity` instead
 owners: [<handle>, ...]
 estimate_hours: <number>              # spike uses `timebox_hours` instead
@@ -90,7 +90,7 @@ relates_to: [<slug>, ...]             # optional — e.g. a defect naming the fe
 
 Todos and the Daily log use a fixed, parseable line format (owner, hours,
 optional due date) rather than free text — see the canonical spec in each
-onboarded repo's own `docs/features/GUIDELINES.md`, which this contract mirrors.
+onboarded repo's own `docs/specifications/GUIDELINES.md`, which this contract mirrors.
 
 ### 5.2 Base branch
 
@@ -102,7 +102,7 @@ Feature plans are authored against **`develop`**.
 
 Planning artifacts arrive on `develop` **via pull request**, not direct commit. This gives a review checkpoint before a feature breakdown becomes official, clean diff history on the planning docs themselves (needed for estimation-drift reporting), and a single reliable automation trigger: merge to `develop`.
 
-**Addendum (docs/features/feature-environment-tracking.md):** the rule above governs where plans are *authored and read from* — that stays `develop`-only. Separately, the worker also reads staging's and main's commit history (never their `docs/features/` content) to compute a per-feature `develop | staging | production` signal, via commit-ancestry against those branches' tips (e.g. the GitHub compare API), not by re-parsing plans off them. This does not change the base-branch rule; it answers a different question — "has this feature's code shipped," not "what does the plan say."
+**Addendum (docs/specifications/feature-environment-tracking.md):** the rule above governs where plans are *authored and read from* — that stays `develop`-only. Separately, the worker also reads staging's and main's commit history (never their `docs/specifications/` content) to compute a per-feature `develop | staging | production` signal, via commit-ancestry against those branches' tips (e.g. the GitHub compare API), not by re-parsing plans off them. This does not change the base-branch rule; it answers a different question — "has this feature's code shipped," not "what does the plan say."
 
 ### 5.3 Daily reporting
 
@@ -122,7 +122,7 @@ Two constraints this creates:
 
 - Log in via git provider OAuth.
 - Browse and select a repository.
-- Select the target folder (default `docs/features/`).
+- Select the target folder (default `docs/specifications/`).
 - Generate a per-repo signing secret, displayed once, for the user to store in that repo's CI secrets.
 - Emit a copy-pasteable CI config snippet for the detected provider.
 

@@ -4,8 +4,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * `isi init` scaffold step (docs/features/isi-cli-init.md): copies the
- * canonical docs/features/ guardrail files, bundled as package resources,
+ * `isi init` scaffold step (docs/specifications/isi-cli-init.md): copies the
+ * canonical docs/specifications/ guardrail files, bundled as package resources,
  * into a newly-onboarded repo — byte-identical, per that feature's
  * acceptance criteria.
  */
@@ -48,8 +48,8 @@ export interface CanonicalTemplateFile {
 /**
  * Reads the canonical GUIDELINES.md + templates (plus the checksum
  * manifest) without writing anything to disk — the remote-commit path used
- * by onboarding's "scaffold docs/features/" offer
- * (docs/features/onboarding-oauth.md AC-003), which writes via a git
+ * by onboarding's "scaffold docs/specifications/" offer
+ * (docs/specifications/onboarding-oauth.md AC-003), which writes via a git
  * provider's contents API instead of `fs`. `initFeaturesFolder` below is
  * the local-filesystem equivalent for `isi init`; both read from the same
  * bundled `resources/` so the two never drift apart.
@@ -92,7 +92,7 @@ export interface InitFeaturesFolderResult {
 }
 
 /**
- * Scaffolds `docs/features/` with the canonical GUIDELINES.md + templates,
+ * Scaffolds `docs/specifications/` with the canonical GUIDELINES.md + templates,
  * byte-identical to the bundled copies, plus a checksum manifest so a future
  * `isi init --update` can detect drift without touching the templates
  * themselves (which must stay byte-identical — acceptance criterion 1).

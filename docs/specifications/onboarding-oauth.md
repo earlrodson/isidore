@@ -3,7 +3,7 @@ schema_version: 1
 id: onboarding-oauth
 title: Onboarding OAuth flow + CI snippet generator
 type: feature
-status: in-progress
+status: implementing
 priority: high
 owners: [earlrodsin@gmail.com]
 estimate_hours: 0
@@ -28,7 +28,7 @@ snippet. No manual DB access, no hand-written workflow YAML, ever again.
   and ingest share no code).
 - [ ] AC-002 — Browse and select from the authenticated user's accessible
   repositories (PRD §6.1).
-- [ ] AC-003 — Select the target folder, defaulting to `docs/features/`
+- [ ] AC-003 — Select the target folder, defaulting to `docs/specifications/`
   (PRD §6.1). If the folder doesn't exist yet in the selected repo, offer to
   scaffold it (reuses `isidore-worker`'s existing `initFeaturesFolder` /
   `isi init` logic rather than duplicating it).
@@ -61,7 +61,7 @@ snippet. No manual DB access, no hand-written workflow YAML, ever again.
   (@earlrodsin@gmail.com, est 6h, due 2026-08-20, done 2026-08-20)
 - [x] Implement repo list + folder picker against the provider API
   (@earlrodsin@gmail.com, est 5h, due 2026-08-20, done 2026-08-20)
-- [x] Implement "scaffold docs/features/" offer, reusing
+- [x] Implement "scaffold docs/specifications/" offer, reusing
   `initFeaturesFolder` via the provider's contents/commit API
   (@earlrodsin@gmail.com, est 4h, due 2026-08-20, done 2026-08-20)
 - [x] Implement secret generation/display-once UI, wired to
@@ -225,7 +225,7 @@ snippet. No manual DB access, no hand-written workflow YAML, ever again.
   generated snippet does it — `gh release download` with no auth
   configured beyond the default token, then `npx --yes --package=<tarball>
   isidore-worker-ci`, which ran real logic and only failed on the expected
-  local preconditions (fake token, no `docs/features` dir), confirming the
+  local preconditions (fake token, no `docs/specifications` dir), confirming the
   live release is genuinely consumable. All gates re-verified green after
   the snippet simplification: `@isidore/web` 40/40, typecheck clean.
   AC-006 is now fully satisfied; only the onboarding smoke test remains.
@@ -309,7 +309,7 @@ snippet. No manual DB access, no hand-written workflow YAML, ever again.
 - **Secret display-once has no recovery path by design** — matches
   `seed-repo-secret.mjs`'s existing behavior. If a user loses it, onboarding
   must support "rotate," not "reveal" (AC-007).
-- **Scaffolding `docs/features/` on someone else's repo means writing to
+- **Scaffolding `docs/specifications/` on someone else's repo means writing to
   it** — via the provider's API (a commit), not a local file write like
   `isi init` does today. This needs OAuth scope wide enough to create a
   branch/commit/PR, which has security implications beyond read-only repo

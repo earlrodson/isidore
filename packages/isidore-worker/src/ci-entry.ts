@@ -28,7 +28,7 @@ export async function main(): Promise<void> {
     project: process.env.ISIDORE_PROJECT ?? repo,
     baseBranch: process.env.ISIDORE_BASE_BRANCH ?? "develop",
     timezone: process.env.ISIDORE_TIMEZONE ?? "UTC",
-    featuresDir: process.env.ISIDORE_FEATURES_DIR ?? "docs/features",
+    featuresDir: process.env.ISIDORE_FEATURES_DIR ?? "docs/specifications",
     owner,
     repo,
     githubToken: requireEnv("GITHUB_TOKEN"),

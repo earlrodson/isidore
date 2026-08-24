@@ -10,7 +10,7 @@ import {
 
 /**
  * `isi` CLI (TECHSTACK.md §3.1). Commands: `isi init` scaffolds
- * `docs/features/` for a newly onboarded repo; `isi context` dumps its open
+ * `docs/specifications/` for a newly onboarded repo; `isi context` dumps its open
  * items as markdown for any CLI-based coding agent to consume. `isi push`
  * (the manual override for `core.ts`'s `runWorker`) is tracked separately
  * and not yet implemented.
@@ -19,12 +19,12 @@ import {
 function printInitHelp(): void {
   console.log(
     [
-      "isi init — scaffold docs/features/ with the canonical GUIDELINES.md",
+      "isi init — scaffold docs/specifications/ with the canonical GUIDELINES.md",
       "and TEMPLATE-*.md files",
       "",
       "Usage: isi init [--force]",
       "",
-      "  --force   Overwrite an existing docs/features/GUIDELINES.md",
+      "  --force   Overwrite an existing docs/specifications/GUIDELINES.md",
     ].join("\n"),
   );
 }
@@ -32,7 +32,7 @@ function printInitHelp(): void {
 function printContextHelp(): void {
   console.log(
     [
-      "isi context — print docs/features/ open items (remaining todos) as",
+      "isi context — print docs/specifications/ open items (remaining todos) as",
       "markdown, for piping into any CLI coding agent",
       "",
       "Usage: isi context [--id <slug>]",
@@ -54,7 +54,7 @@ export async function main(argv: string[]): Promise<void> {
       printInitHelp();
       return;
     }
-    const destDir = join(process.cwd(), "docs", "features");
+    const destDir = join(process.cwd(), "docs", "specifications");
     try {
       const result = initFeaturesFolder({ destDir, force });
       console.log(
@@ -78,7 +78,7 @@ export async function main(argv: string[]): Promise<void> {
     }
     const idFlagIndex = rest.indexOf("--id");
     const id = idFlagIndex === -1 ? undefined : rest[idFlagIndex + 1];
-    const featuresDir = join(process.cwd(), "docs", "features");
+    const featuresDir = join(process.cwd(), "docs", "specifications");
     try {
       console.log(buildContext({ featuresDir, id }));
     } catch (error) {

@@ -2,7 +2,7 @@
 
 Isidore is a read-only, cross-project dashboard for AI-native development
 work. It never authors work items — it reads structured planning files
-(`docs/features/*.md`) that already live in each onboarded repo, ingests a
+(`docs/specifications/*.md`) that already live in each onboarded repo, ingests a
 derived snapshot from CI, and gives teams and stakeholders one place to see
 what's planned, in progress, and done across every project. See `docs/PRD.md`
 for the full product rationale and `docs/TECHSTACK.md` for the pipeline
@@ -11,7 +11,7 @@ architecture.
 ## How it fits together
 
 ```
-onboarded repo (docs/features/*.md)
+onboarded repo (docs/specifications/*.md)
         │  CI push to develop
         ▼
 isidore-worker  (parses features, enriches from git/GitHub, signs, POSTs)
@@ -55,7 +55,7 @@ pnpm --filter @isidore/db db:migrate
 actually reads. Don't rely on a separately-guessed env file for anything
 that writes to the same database the app reads from — see the
 `DATABASE_URL` drift risk documented in
-`docs/features/onboarding-oauth.md`.
+`docs/specifications/onboarding-oauth.md`.
 
 ## Running the app
 
@@ -72,7 +72,7 @@ Visit `http://localhost:3000`:
 - `/onboarding` — connect a repo:
   1. Log in via the GitHub App (OAuth).
   2. Install the App on an account/org and pick repos to grant it.
-  3. Per repo: scaffold `docs/features/` (opens a PR) if it doesn't exist
+  3. Per repo: scaffold `docs/specifications/` (opens a PR) if it doesn't exist
      yet, generate/rotate the repo's ingest secret (shown once — save it),
      and copy the generated CI snippet into
      `.github/workflows/isidore-worker.yml`. Optionally override the
@@ -88,21 +88,21 @@ Once a repo is onboarded via `/onboarding`:
 2. Push to the repo's base branch (`develop` by default). The workflow
    downloads the published `isidore-worker` release tarball and runs it —
    no checkout/build of Isidore's own source required.
-3. The worker parses `docs/features/*.md`, enriches each feature with open
+3. The worker parses `docs/specifications/*.md`, enriches each feature with open
    PR state and its furthest-reached environment (develop/staging/
    production, via commit ancestry), signs the payload, and POSTs it to
    `/api/ingest`.
 4. The project shows up on the dashboard within the same CI run.
 
-## The `docs/features/` convention
+## The `docs/specifications/` convention
 
-Every onboarded repo needs a `docs/features/` folder, one Markdown file per
+Every onboarded repo needs a `docs/specifications/` folder, one Markdown file per
 work item, each with required frontmatter (`id`, `title`, `type`, `status`,
 `owners`, ...), an `## Acceptance criteria` section, a `## Todos` section,
 and a `## Daily log`. Run `isi init` (from `@isidore/worker`'s CLI) to
 scaffold `GUIDELINES.md` and the `TEMPLATE-*.md` files into a new repo —
 onboarding's "scaffold" button does the same thing via a PR. Full spec:
-`docs/features/GUIDELINES.md`.
+`docs/specifications/GUIDELINES.md`.
 
 ## Development commands
 

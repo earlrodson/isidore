@@ -1,12 +1,13 @@
-# Feature tracking guardrails
+# Specification tracking guardrails
 
 **Current schema version: `1`** — bump only when this contract itself
 changes (a field added/removed/renamed), never per edit to an item file.
 
-One file per work item at `docs/features/<slug>.md`. No week- or type-based
-nesting — items are keyed by identity, not by calendar or category. `<slug>`
-matches `id` below, kebab-case, and stays stable for the life of the item
-(reclassifying `type` later must not require moving/renaming the file).
+One file per work item at `docs/specifications/<slug>.md`. No week- or
+type-based nesting — items are keyed by identity, not by calendar or
+category. `<slug>` matches `id` below, kebab-case, and stays stable for the
+life of the item (reclassifying `type` later must not require moving/
+renaming the file).
 
 Copy the matching template to start a new item:
 - `TEMPLATE-feature.md` — for both `feature` and `enabler`
@@ -33,7 +34,7 @@ schema_version: 1                     # must match "Current schema version" abov
 id: <slug>
 title: <human title>
 type: feature | enabler | defect | spike
-status: planned | in-progress | blocked | done | cancelled
+status: new | analyzing | ready | implementing | validating | deploying | releasing | done | removed | blocked
 priority: low | medium | high        # defect uses `severity` instead — see below
 ado_id: <ADO work item id>            # omit the key entirely if there is none
 prd_ref: <path>#<section>             # e.g. docs/PRD.md#3 — omit if not sourced from a PRD/BRD
@@ -83,10 +84,11 @@ script computes the reverse join by scanning every file's `relates_to`.
    Never rewrite or delete a past entry. To correct one, add a new entry that
    says so. This is also how "what did I do yesterday" gets answered — filter
    every file's Daily log for that date.
-4. **`status` moves forward only**: `planned → in-progress →`
-   (`blocked ⇄ in-progress`) `→ done`, or `→ cancelled` from any state. Don't
-   silently move a `done` item backward — if it's reopened, say why under
-   Decisions & risks.
+4. **`status` moves forward only**: `new → analyzing → ready → implementing →
+   validating → deploying → releasing → done`. `blocked` is reachable from
+   any in-flight stage and returns to the stage it left from once
+   unblocked; `removed` is reachable from any state. Don't silently move a
+   `done` item backward — if it's reopened, say why under Decisions & risks.
 5. **`updated` bumps to today's date on every edit.**
 6. **`ado_id` is optional.** Omit the key entirely when there's no linked
    Azure DevOps work item — don't write `null` or `""`.
@@ -104,9 +106,9 @@ script computes the reverse join by scanning every file's `relates_to`.
 
 ## Answering "yesterday / today" from this format
 
-- **Yesterday**: scan every `docs/features/*.md`, collect `## Daily log`
+- **Yesterday**: scan every `docs/specifications/*.md`, collect `## Daily log`
   lines dated yesterday for the relevant `@owner`.
-- **Today**: collect open (`- [ ]`) todos across `in-progress`/`blocked`
+- **Today**: collect open (`- [ ]`) todos across in-flight/`blocked`
   items where `due` is today or earlier (overdue), for the relevant
   `@owner`. Todos with no `due` are backlog, not "today."
 
@@ -114,11 +116,12 @@ script computes the reverse join by scanning every file's `relates_to`.
 
 The Isidore worker reads these files on every push and forwards `type`,
 `severity`, and `relates_to` through to the dashboard (ingest payload
-contract `1.2`) — a `defect` or `spike` file shows up there as such, not
+contract `1.3`) — a `defect` or `spike` file shows up there as such, not
 just as an undifferentiated `feature`. It, and any other tool reading
 these files, should:
-- Glob `docs/features/*.md` **excluding** `GUIDELINES.md` and `TEMPLATE-*.md`
-  by filename — those two carry placeholder frontmatter, not real items.
+- Glob `docs/specifications/*.md` **excluding** `GUIDELINES.md` and
+  `TEMPLATE-*.md` by filename — those two carry placeholder frontmatter,
+  not real items.
 - Treat `relates_to` as one-directional and compute the reverse join itself
   (e.g. "defects filed against this feature" = every file whose `relates_to`
   contains this file's `id`).
@@ -130,9 +133,10 @@ these files, should:
 ## Cross-project rollup
 
 Every project that adopts this convention uses the identical schema above at
-`docs/features/*.md` in its own repo — tracking stays versioned next to the
-code it describes, not centralized. A separate reporting script (outside any
-one project) can glob `~/repos/*/docs/features/*.md`, parse frontmatter, and
-merge across repos, since the project name is recoverable from the repo path
-itself and every file's field names line up exactly. Nothing above needs to
-change to support that; the script is the only new piece.
+`docs/specifications/*.md` in its own repo — tracking stays versioned next to
+the code it describes, not centralized. A separate reporting script (outside
+any one project) can glob `~/repos/*/docs/specifications/*.md`, parse
+frontmatter, and merge across repos, since the project name is recoverable
+from the repo path itself and every file's field names line up exactly.
+Nothing above needs to change to support that; the script is the only new
+piece.

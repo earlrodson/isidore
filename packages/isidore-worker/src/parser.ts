@@ -1,18 +1,23 @@
 import { parse as parseYaml } from "yaml";
 
 /**
- * Parser for docs/features/<slug>.md item files, per
- * docs/features/GUIDELINES.md. Read-only: never queries Isidore, never
+ * Parser for docs/specifications/<slug>.md item files, per
+ * docs/specifications/GUIDELINES.md. Read-only: never queries Isidore, never
  * makes decisions, never calls an LLM (TECHSTACK.md §3 design constraints).
  */
 
 export type FeatureType = "feature" | "enabler" | "defect" | "spike";
 export type FeatureFileStatus =
-  | "planned"
-  | "in-progress"
-  | "blocked"
+  | "new"
+  | "analyzing"
+  | "ready"
+  | "implementing"
+  | "validating"
+  | "deploying"
+  | "releasing"
   | "done"
-  | "cancelled";
+  | "removed"
+  | "blocked";
 
 export interface FeatureFrontmatter {
   schema_version: number;
@@ -156,7 +161,7 @@ function parseDailyLog(section: string | null): FeatureDailyLogEntry[] {
   return entries;
 }
 
-/** Parses a single docs/features/<slug>.md file's raw text content. */
+/** Parses a single docs/specifications/<slug>.md file's raw text content. */
 export function parseFeatureFile(content: string): ParsedFeatureFile {
   const match = content.match(FRONTMATTER_RE);
   if (!match) {

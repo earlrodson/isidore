@@ -89,7 +89,7 @@ function toOpenPr(pr: GitHubPullRequest): OpenPr {
 
 /**
  * Maps each given feature id to the open PRs touching its
- * `docs/features/<id>.md` file — the heuristic for "in-progress work not
+ * `docs/specifications/<id>.md` file — the heuristic for "in-progress work not
  * yet merged to develop" from PRD.md §5.3 ("the worker must read open PR
  * state, not just merged state, or days without merges will look empty").
  */
@@ -101,7 +101,7 @@ export async function enrichOpenPrsByFeature(
     featureIds.map((id) => [id, []]),
   );
   const featureFileById = new Map(
-    featureIds.map((id) => [`docs/features/${id}.md`, id]),
+    featureIds.map((id) => [`docs/specifications/${id}.md`, id]),
   );
 
   const openPrs = await fetchOpenPullRequests(params);
@@ -153,9 +153,9 @@ async function isCommitInBranch(
 }
 
 /**
- * docs/features/feature-environment-tracking.md — the furthest environment
+ * docs/specifications/feature-environment-tracking.md — the furthest environment
  * `commitSha` has reached, via ancestry against the staging/production branch
- * tips (never by re-parsing `docs/features/` off those branches). Checks
+ * tips (never by re-parsing `docs/specifications/` off those branches). Checks
  * production first since it's the furthest signal. `branches.production`
  * defaults to `main`, falling back to `master` if `main` doesn't exist
  * (AC-003); `branches.staging` defaults to `staging`. Returns `null` only
