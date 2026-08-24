@@ -24,6 +24,13 @@ export interface CiSnippetParams {
  * ever goes private, this step would need a PAT with `contents:read` on
  * it instead.
  */
+/** Must match `ci-entry.ts`'s own defaults exactly — these are what the
+ * worker falls back to when `ISIDORE_STAGING_BRANCH`/
+ * `ISIDORE_PRODUCTION_BRANCH` aren't set, so the trigger list below and the
+ * worker's runtime dispatch never disagree about which branch means what. */
+const DEFAULT_STAGING_BRANCH = "staging";
+const DEFAULT_PRODUCTION_BRANCH = "main";
+
 export function buildGithubActionsWorkflow({
   ingestEndpoint,
   featuresDir = "docs/specifications",
@@ -32,9 +39,14 @@ export function buildGithubActionsWorkflow({
   productionBranch,
 }: CiSnippetParams): string {
   const sourceRepo = process.env.ISIDORE_SOURCE_REPO ?? DEFAULT_SOURCE_REPO;
-  // docs/specifications/feature-environment-tracking.md AC-003 — only emitted when
-  // the user overrides them on /onboarding; unset lets the worker fall back
-  // to its own defaults (staging / main-then-master).
+  const resolvedStaging = stagingBranch ?? DEFAULT_STAGING_BRANCH;
+  const resolvedProduction = productionBranch ?? DEFAULT_PRODUCTION_BRANCH;
+  // docs/specifications/feature-environment-tracking.md AC-007 — only
+  // emitted when the user overrides them on /onboarding; unset lets the
+  // worker fall back to the same DEFAULT_STAGING_BRANCH/
+  // DEFAULT_PRODUCTION_BRANCH above. Triggering on all three branches (not
+  // just develop) is what lets a staging/production push send an
+  // environment ping instead of a full snapshot (AC-008).
   const environmentBranchEnv = [
     stagingBranch ? `          ISIDORE_STAGING_BRANCH: ${stagingBranch}\n` : "",
     productionBranch ? `          ISIDORE_PRODUCTION_BRANCH: ${productionBranch}\n` : "",
@@ -43,7 +55,7 @@ export function buildGithubActionsWorkflow({
   return `name: isidore-worker
 on:
   push:
-    branches: [${baseBranch}]
+    branches: [${baseBranch}, ${resolvedStaging}, ${resolvedProduction}]
   workflow_dispatch: {}
 
 jobs:
@@ -61,7 +73,7 @@ jobs:
           GH_TOKEN: \${{ github.token }}
         run: gh release download --repo ${sourceRepo} --pattern 'isidore-worker-*.tgz' --dir .
 
-      - name: Push snapshot
+      - name: Push snapshot or environment ping
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
           ISIDORE_INGEST_ENDPOINT: ${ingestEndpoint}

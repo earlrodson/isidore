@@ -7,7 +7,7 @@ import {
   type Provider,
   type Todo,
 } from "@isidore/shared";
-import { enrichOpenPrsByFeature, getHeadCommitSha, resolveEnvironment } from "./git.js";
+import { enrichOpenPrsByFeature, getHeadCommitSha } from "./git.js";
 import { isFeatureFile, parseFeatureFile } from "./parser.js";
 import { postSnapshot, type PostSnapshotResult } from "./send.js";
 
@@ -66,8 +66,6 @@ export interface BuildSnapshotParams {
   owner: string;
   repo: string;
   githubToken: string;
-  stagingBranch?: string;
-  productionBranch?: string;
   now?: () => number;
   loadFeatures?: (featuresDir: string) => FeatureFileSource[];
   fetchImpl?: Parameters<typeof enrichOpenPrsByFeature>[0]["fetchImpl"];
@@ -95,13 +93,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
     fetchImpl: params.fetchImpl,
   };
   const commitSha = getHeadCommitSha(params.cwd);
-  const [openPrsByFeature, environment] = await Promise.all([
-    enrichOpenPrsByFeature(gitApiParams, featureIds),
-    resolveEnvironment(gitApiParams, commitSha, {
-      staging: params.stagingBranch,
-      production: params.productionBranch,
-    }),
-  ]);
+  const openPrsByFeature = await enrichOpenPrsByFeature(gitApiParams, featureIds);
 
   const features: Feature[] = parsed.map((file) => ({
     feature_id: file.frontmatter.id,
@@ -111,7 +103,9 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
     owners: file.frontmatter.owners,
     estimate_hours: file.frontmatter.estimate_hours ?? file.frontmatter.timebox_hours ?? 0,
     hours_logged: file.hoursLogged,
-    environment,
+    // `environment` is intentionally omitted — feature-environment-tracking.md
+    // AC-008/012: it's now set exclusively by environment pings
+    // (environment-ping.ts), never inferred during a develop snapshot.
     type: file.frontmatter.type,
     severity: file.frontmatter.severity,
     relates_to: file.frontmatter.relates_to,

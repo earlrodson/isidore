@@ -104,17 +104,11 @@ describe("buildSnapshot", () => {
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
   });
 
-  it("attaches the resolved environment to every feature (feature-environment-tracking AC-001)", async () => {
-    const fetchImpl = vi.fn().mockImplementation(async (url: string) => {
-      if (url.includes("/compare/")) {
-        const branch = url.split("...")[1];
-        return jsonResponse({ status: branch === "main" ? "identical" : "behind" });
-      }
-      return jsonResponse([]);
-    });
+  it("never sets environment — that's owned exclusively by environment pings now (feature-environment-tracking AC-008/012)", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse([]));
 
     const payload = await buildSnapshot({ ...baseParams, cwd: process.cwd(), fetchImpl });
-    expect(payload.features[0].environment).toBe("production");
+    expect(payload.features[0].environment).toBeUndefined();
   });
 
   it("throws a descriptive error when a feature file fails to parse", async () => {

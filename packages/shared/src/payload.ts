@@ -111,6 +111,60 @@ export const IngestPayloadSchema = z.object({
   features: z.array(FeatureSchema),
 });
 
+export const SUPPORTED_ENVIRONMENT_PING_SCHEMA_VERSIONS = ["1.0"] as const;
+
+/**
+ * docs/specifications/feature-environment-tracking.md (AC-007–013) — a
+ * distinct, separately-versioned payload the worker sends on a push to a
+ * *staging or production* branch, never to `/api/ingest`. Carries only
+ * `feature_id`s present on that branch — never `status`/`todos`/
+ * `estimate_hours`/etc — which is what keeps PRD §5.2's "plans only live
+ * on develop" rule intact under a multi-branch CI trigger. `environment`
+ * is deliberately not `"develop"` here; a develop push never sends a ping,
+ * it sends the normal `IngestPayload`.
+ */
+export const EnvironmentPingPayloadSchema = z.object({
+  environment_ping_schema_version: z.enum(SUPPORTED_ENVIRONMENT_PING_SCHEMA_VERSIONS),
+  provider: ProviderSchema,
+  repo_id: z.string().min(1),
+  project: z.string().min(1),
+  environment: z.enum(["staging", "production"]),
+  commit_sha: z.string().min(1),
+  generated_at: z.string().datetime({ offset: true }),
+  timezone: z.string().min(1),
+  feature_ids: z.array(z.string().min(1)),
+});
+
+export type EnvironmentPingPayload = z.infer<typeof EnvironmentPingPayloadSchema>;
+
+export class UnknownEnvironmentPingSchemaVersionError extends Error {
+  constructor(public readonly received: unknown) {
+    super(`Unknown environment_ping_schema_version: ${JSON.stringify(received)}`);
+    this.name = "UnknownEnvironmentPingSchemaVersionError";
+  }
+}
+
+/** Mirrors `parseIngestPayload`'s reject-unknown-version-outright behavior. */
+export function parseEnvironmentPingPayload(raw: unknown): EnvironmentPingPayload {
+  if (
+    typeof raw !== "object" ||
+    raw === null ||
+    !("environment_ping_schema_version" in raw) ||
+    !SUPPORTED_ENVIRONMENT_PING_SCHEMA_VERSIONS.includes(
+      (raw as { environment_ping_schema_version: unknown })
+        .environment_ping_schema_version as never,
+    )
+  ) {
+    const received =
+      typeof raw === "object" && raw !== null && "environment_ping_schema_version" in raw
+        ? (raw as { environment_ping_schema_version: unknown }).environment_ping_schema_version
+        : undefined;
+    throw new UnknownEnvironmentPingSchemaVersionError(received);
+  }
+
+  return EnvironmentPingPayloadSchema.parse(raw);
+}
+
 export type Provider = z.infer<typeof ProviderSchema>;
 export type FeatureStatus = z.infer<typeof FeatureStatusSchema>;
 export type Environment = z.infer<typeof EnvironmentSchema>;

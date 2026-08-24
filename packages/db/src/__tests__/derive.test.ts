@@ -20,7 +20,7 @@ let db: Db;
 
 async function truncateAll(database: Db) {
   await database.execute(
-    sql`truncate table snapshots, status_events, actuals, estimates, todos, feature_assignees, features, assignees, projects cascade`,
+    sql`truncate table snapshots, environment_pings, status_events, actuals, estimates, todos, feature_assignees, features, assignees, projects cascade`,
   );
 }
 
@@ -91,7 +91,7 @@ describe("writeFeatureSnapshot", () => {
     expect(featureRows[0].status).toBe("done");
   });
 
-  it("defaults environment to null when the payload doesn't carry it (1.0 backward compat)", async () => {
+  it("leaves environment null when the payload doesn't carry it", async () => {
     const payload = parseIngestPayload(loadFixture("valid.json"));
     const feature = payload.features[0];
 
@@ -101,14 +101,33 @@ describe("writeFeatureSnapshot", () => {
     expect(featureRow.environment).toBeNull();
   });
 
-  it("persists a 1.1 payload's per-feature environment", async () => {
+  it("ignores a feature's environment field entirely, even when the payload carries one — that's owned exclusively by environment pings now (feature-environment-tracking AC-008/012)", async () => {
     const payload = parseIngestPayload(loadFixture("valid-with-environment.json"));
     const feature = payload.features[0];
 
     await writeFeatureSnapshot(db, payload, feature);
 
     const [featureRow] = await db.select().from(schema.features);
-    expect(featureRow.environment).toBe("staging");
+    expect(featureRow.environment).toBeNull();
+  });
+
+  it("never clobbers an environment already set by a ping, on a later develop snapshot", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [before] = await db.select().from(schema.features);
+    await db
+      .update(schema.features)
+      .set({ environment: "production" })
+      .where(sql`${schema.features.id} = ${before.id}`);
+
+    const updatedFeature = { ...feature, hours_logged: 8 };
+    await writeFeatureSnapshot(db, payload, updatedFeature);
+
+    const [after] = await db.select().from(schema.features);
+    expect(after.environment).toBe("production");
+    expect(after.hoursLogged).toBe(8);
   });
 
   it("defaults type/severity/relatesTo to null when the payload doesn't carry them (pre-1.2 backward compat)", async () => {

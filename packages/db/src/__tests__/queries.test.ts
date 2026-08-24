@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { sql } from "drizzle-orm";
-import { parseIngestPayload } from "@isidore/shared";
+import { parseEnvironmentPingPayload, parseIngestPayload } from "@isidore/shared";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createDb, type Db } from "../client.js";
+import { writeEnvironmentPing } from "../environment.js";
 import {
   getProjectDetail,
   listDeveloperAllocation,
@@ -26,7 +27,7 @@ let db: Db;
 
 async function truncateAll(database: Db) {
   await database.execute(
-    sql`truncate table snapshots, status_events, actuals, estimates, todos, feature_assignees, features, assignees, projects cascade`,
+    sql`truncate table snapshots, environment_pings, status_events, actuals, estimates, todos, feature_assignees, features, assignees, projects cascade`,
   );
 }
 
@@ -130,17 +131,28 @@ describe("getProjectDetail", () => {
     });
   });
 
-  it("surfaces a feature's environment, or null when it hasn't been resolved (feature-environment-tracking AC-005)", async () => {
+  it("surfaces a feature's environment as set by an environment ping, or null before any ping arrives (feature-environment-tracking AC-005/008)", async () => {
     const payload = parseIngestPayload(loadFixture("valid.json"));
     const feature = payload.features[0];
     await writeFeatureSnapshot(db, payload, feature);
     const detailWithoutEnvironment = await getProjectDetail(db, payload.provider, payload.repo_id);
     expect(detailWithoutEnvironment?.features[0].environment).toBeNull();
 
-    const envPayload = parseIngestPayload(loadFixture("valid-with-environment.json"));
-    const envFeature = envPayload.features[0];
-    await writeFeatureSnapshot(db, envPayload, envFeature);
-    const detailWithEnvironment = await getProjectDetail(db, envPayload.provider, envPayload.repo_id);
+    await writeEnvironmentPing(
+      db,
+      parseEnvironmentPingPayload({
+        environment_ping_schema_version: "1.0",
+        provider: payload.provider,
+        repo_id: payload.repo_id,
+        project: payload.project,
+        environment: "staging",
+        commit_sha: "stage123",
+        generated_at: "2026-08-25T09:00:00Z",
+        timezone: "UTC",
+        feature_ids: [feature.feature_id],
+      }),
+    );
+    const detailWithEnvironment = await getProjectDetail(db, payload.provider, payload.repo_id);
     expect(detailWithEnvironment?.features[0].environment).toBe("staging");
   });
 

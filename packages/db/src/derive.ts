@@ -1,6 +1,7 @@
 import { and, eq, notInArray, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import type { Feature } from "@isidore/shared";
+import { deriveEnvironmentPing } from "./environment.js";
 import * as schema from "./schema.js";
 
 type Tx = NodePgDatabase<typeof schema>;
@@ -44,7 +45,6 @@ export async function deriveSnapshot(
       estimateHours: feature.estimate_hours,
       hoursLogged: feature.hours_logged,
       openPrs: feature.open_prs,
-      environment: feature.environment ?? null,
       type: feature.type ?? null,
       severity: feature.severity ?? null,
       relatesTo: feature.relates_to ?? null,
@@ -58,11 +58,14 @@ export async function deriveSnapshot(
         estimateHours: feature.estimate_hours,
         hoursLogged: feature.hours_logged,
         openPrs: feature.open_prs,
-        environment: feature.environment ?? null,
         type: feature.type ?? null,
         severity: feature.severity ?? null,
         relatesTo: feature.relates_to ?? null,
         updatedAt: sql`now()`,
+        // `environment` is deliberately absent here — it's owned
+        // exclusively by `deriveEnvironmentPing` (feature-environment-
+        // tracking.md AC-008/010) now, never by the develop snapshot path,
+        // so a later develop push must never clobber it back to null.
       },
     })
     .returning();
@@ -187,9 +190,16 @@ async function syncTodos(tx: Tx, featureId: string, todos: Feature["todos"]): Pr
 }
 
 /**
- * Rebuilds every normalized table from the stored `snapshots` rows, in
- * receipt order. Used to replay after a parser fix or metric change without
- * asking every repo to re-run CI (TECHSTACK.md §4.2).
+ * Rebuilds every normalized table from the stored `snapshots` and
+ * `environment_pings` rows, in receipt order. Used to replay after a
+ * parser fix or metric change without asking every repo to re-run CI
+ * (TECHSTACK.md §4.2).
+ *
+ * `environment_pings` is replayed *after* every `snapshots` row, never
+ * interleaved by timestamp — a ping only ever updates a `features` row
+ * that a snapshot creates, so features must exist first. Within that,
+ * ping rows still replay in `receivedAt` order so AC-010's monotonic rule
+ * reproduces the same end state as live ingest.
  */
 export async function replayAll(db: NodePgDatabase<typeof schema>): Promise<void> {
   await db.transaction(async (tx) => {
@@ -199,6 +209,13 @@ export async function replayAll(db: NodePgDatabase<typeof schema>): Promise<void
     const rows = await tx.select().from(schema.snapshots).orderBy(schema.snapshots.receivedAt);
     for (const row of rows) {
       await deriveSnapshot(tx, row);
+    }
+    const pingRows = await tx
+      .select()
+      .from(schema.environmentPings)
+      .orderBy(schema.environmentPings.receivedAt);
+    for (const row of pingRows) {
+      await deriveEnvironmentPing(tx, row);
     }
   });
 }

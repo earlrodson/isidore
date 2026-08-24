@@ -49,6 +49,41 @@ export const snapshots = pgTable(
   ],
 );
 
+/**
+ * Raw tier for `feature-environment-tracking`'s AC-009 environment pings —
+ * one row per (provider, repo, environment, commit), never per feature, so
+ * `replayAll` can rebuild `features.environment` deterministically without
+ * re-contacting GitHub. `feature_ids` is the full list from a single ping;
+ * `deriveEnvironmentPing` fans that out to per-feature monotonic updates.
+ */
+export const environmentPings = pgTable(
+  "environment_pings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull(),
+    repoId: text("repo_id").notNull(),
+    project: text("project").notNull(),
+    environmentPingSchemaVersion: text("environment_ping_schema_version").notNull(),
+    environment: text("environment").notNull(),
+    commitSha: text("commit_sha").notNull(),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull(),
+    timezone: text("timezone").notNull(),
+    featureIds: jsonb("feature_ids").notNull(),
+    contentHash: text("content_hash").notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("environment_pings_provider_repo_env_commit_key").on(
+      table.provider,
+      table.repoId,
+      table.environment,
+      table.commitSha,
+    ),
+  ],
+);
+
 /** Normalized tier — derived deterministically from `snapshots`, never
  * written to directly by ingest (TECHSTACK.md §4.2). */
 export const projects = pgTable(
@@ -84,10 +119,12 @@ export const features = pgTable(
     estimateHours: doublePrecision("estimate_hours").notNull(),
     hoursLogged: doublePrecision("hours_logged").notNull(),
     openPrs: jsonb("open_prs").notNull(),
-    // docs/specifications/feature-environment-tracking.md — furthest environment
-    // this feature's last-seen commit has reached (develop/staging/
-    // production), via commit-ancestry, not by re-parsing docs/specifications/ off
-    // other branches. Null when undetermined (e.g. no staging/main branch).
+    // docs/specifications/feature-environment-tracking.md — furthest
+    // environment this feature has been observed on (develop/staging/
+    // production). Written only by `deriveEnvironmentPing`
+    // (environment_pings), monotonically (never downgraded by a later,
+    // unrelated ping) — never by the normal develop snapshot path. Null
+    // until the first ping for this feature arrives.
     environment: text("environment"),
     // payload contract 1.2 (docs/specifications/payload-contract-v1-2-type-severity.md)
     // — the item's kind and, for defects, severity + the slugs it relates

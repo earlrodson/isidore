@@ -3,6 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const runWorker = vi.fn();
 vi.mock("../core.js", () => ({ runWorker }));
 
+const runEnvironmentPing = vi.fn();
+vi.mock("../environment-ping.js", () => ({ runEnvironmentPing }));
+
 const originalEnv = { ...process.env };
 
 function setEnv(vars: Record<string, string | undefined>): void {
@@ -23,6 +26,7 @@ describe("ci-entry main", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     runWorker.mockReset();
+    runEnvironmentPing.mockReset();
   });
 
   afterEach(() => {
@@ -55,6 +59,7 @@ describe("ci-entry main", () => {
         secret: "shh-secret",
       }),
     );
+    expect(runEnvironmentPing).not.toHaveBeenCalled();
   });
 
   it("honors ISIDORE_* overrides instead of the derived defaults", async () => {
@@ -86,8 +91,6 @@ describe("ci-entry main", () => {
         baseBranch: "main",
         timezone: "Asia/Manila",
         featuresDir: "custom/features",
-        stagingBranch: "stage",
-        productionBranch: "release",
       }),
     );
   });
@@ -100,5 +103,83 @@ describe("ci-entry main", () => {
       "Missing required environment variable: GITHUB_TOKEN",
     );
     expect(runWorker).not.toHaveBeenCalled();
+  });
+
+  it("runs an environment ping instead of runWorker when GITHUB_REF_NAME matches the staging branch (feature-environment-tracking AC-007/008)", async () => {
+    setEnv({ ...requiredEnv, GITHUB_REF_NAME: "staging" });
+    runEnvironmentPing.mockResolvedValue({
+      status: 200,
+      attempts: 1,
+      payload: { repo_id: "acme/project-1", feature_ids: ["a", "b"] },
+    });
+
+    const { main } = await import("../ci-entry.js");
+    await main();
+
+    expect(runEnvironmentPing).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "github",
+        repoId: "acme/project-1",
+        environment: "staging",
+        featuresDir: "docs/specifications",
+        endpoint: "https://isidore.example/api/ingest",
+        secret: "shh-secret",
+      }),
+    );
+    expect(runWorker).not.toHaveBeenCalled();
+    // GITHUB_TOKEN is required for the snapshot path (PR enrichment) but
+    // not the ping path — main() must not demand it for a staging push.
+  });
+
+  it("runs an environment ping tagged production when GITHUB_REF_NAME matches the production branch", async () => {
+    setEnv({ ...requiredEnv, GITHUB_REF_NAME: "main" });
+    runEnvironmentPing.mockResolvedValue({
+      status: 200,
+      attempts: 1,
+      payload: { repo_id: "acme/project-1", feature_ids: [] },
+    });
+
+    const { main } = await import("../ci-entry.js");
+    await main();
+
+    expect(runEnvironmentPing).toHaveBeenCalledWith(
+      expect.objectContaining({ environment: "production" }),
+    );
+    expect(runWorker).not.toHaveBeenCalled();
+  });
+
+  it("honors ISIDORE_STAGING_BRANCH/ISIDORE_PRODUCTION_BRANCH overrides when dispatching", async () => {
+    setEnv({
+      ...requiredEnv,
+      GITHUB_REF_NAME: "release",
+      ISIDORE_PRODUCTION_BRANCH: "release",
+    });
+    runEnvironmentPing.mockResolvedValue({
+      status: 200,
+      attempts: 1,
+      payload: { repo_id: "acme/project-1", feature_ids: [] },
+    });
+
+    const { main } = await import("../ci-entry.js");
+    await main();
+
+    expect(runEnvironmentPing).toHaveBeenCalledWith(
+      expect.objectContaining({ environment: "production" }),
+    );
+  });
+
+  it("falls through to runWorker when GITHUB_REF_NAME is unset (local/manual invocation)", async () => {
+    setEnv({ ...requiredEnv, GITHUB_REF_NAME: undefined });
+    runWorker.mockResolvedValue({
+      status: 200,
+      attempts: 1,
+      payload: { repo_id: "acme/project-1", features: [] },
+    });
+
+    const { main } = await import("../ci-entry.js");
+    await main();
+
+    expect(runWorker).toHaveBeenCalled();
+    expect(runEnvironmentPing).not.toHaveBeenCalled();
   });
 });

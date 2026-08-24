@@ -1,6 +1,7 @@
 export * from "./auth.js";
 export * from "./client.js";
 export * from "./derive.js";
+export * from "./environment.js";
 export * from "./hash.js";
 export * from "./nonces.js";
 export * from "./queries.js";

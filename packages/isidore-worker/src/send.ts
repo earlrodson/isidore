@@ -1,13 +1,16 @@
 import { createHmac, randomBytes } from "node:crypto";
-import type { IngestPayload } from "@isidore/shared";
 import type { FetchLike } from "./git.js";
 
 /**
  * Sign + POST step (TECHSTACK.md §3 pipeline: "HMAC sign and POST with
- * retry"). Signing scheme matches the ingest endpoint exactly
+ * retry"). Signing scheme matches the ingest endpoints exactly
  * (apps/web/src/lib/ingest-auth.ts): `sha256(secret, timestamp.nonce.rawBody)`
  * over the exact JSON string sent, carried in
- * `X-Isidore-Signature`/`X-Isidore-Timestamp`/`X-Isidore-Nonce`.
+ * `X-Isidore-Signature`/`X-Isidore-Timestamp`/`X-Isidore-Nonce`. Generic
+ * over the payload shape — used for both the normal `IngestPayload`
+ * (`/api/ingest`) and `EnvironmentPingPayload` (`/api/ingest/environment`,
+ * feature-environment-tracking.md AC-009), since signing never inspects
+ * the payload's contents.
  */
 
 export interface SignedRequest {
@@ -30,7 +33,7 @@ export interface SignPayloadOptions {
  * the raw bytes it received, not a re-serialized object.
  */
 export function signPayload(
-  payload: IngestPayload,
+  payload: unknown,
   secret: string,
   options: SignPayloadOptions = {},
 ): SignedRequest {
@@ -70,7 +73,7 @@ export class IngestPostNetworkError extends Error {
 
 export interface PostSnapshotParams extends SignPayloadOptions {
   endpoint: string;
-  payload: IngestPayload;
+  payload: unknown;
   secret: string;
   fetchImpl?: FetchLike;
   /** Total attempts, including the first — default 3. */

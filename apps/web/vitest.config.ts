@@ -9,5 +9,10 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // The /api/ingest and /api/ingest/environment route test files share
+    // one live Postgres DB, truncated in beforeEach — running them in
+    // parallel races truncate against another file's in-flight inserts
+    // (same reasoning as packages/db's vitest.config.ts).
+    fileParallelism: false,
   },
 });

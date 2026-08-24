@@ -20,16 +20,23 @@ describe("buildGithubActionsWorkflow", () => {
 
   it("defaults featuresDir and baseBranch, honors overrides", () => {
     const defaults = buildGithubActionsWorkflow({ ingestEndpoint: "https://x/api/ingest" });
-    expect(defaults).toContain("branches: [develop]");
+    expect(defaults).toContain("branches: [develop, staging, main]");
     expect(defaults).toContain("ISIDORE_FEATURES_DIR: docs/specifications");
 
     const overridden = buildGithubActionsWorkflow({
       ingestEndpoint: "https://x/api/ingest",
       featuresDir: "features",
-      baseBranch: "main",
+      baseBranch: "trunk",
+      stagingBranch: "stage",
+      productionBranch: "release",
     });
-    expect(overridden).toContain("branches: [main]");
+    expect(overridden).toContain("branches: [trunk, stage, release]");
     expect(overridden).toContain("ISIDORE_FEATURES_DIR: features");
+  });
+
+  it("triggers on the configured staging/production branches even when only defaults apply (feature-environment-tracking AC-007)", () => {
+    const yaml = buildGithubActionsWorkflow({ ingestEndpoint: "https://x/api/ingest" });
+    expect(yaml).toContain("branches: [develop, staging, main]");
   });
 
   it("downloads the prebuilt tarball from a GitHub Release and runs it via npx — no checkout/build of isidore source", () => {
