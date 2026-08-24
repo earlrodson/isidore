@@ -3,11 +3,11 @@ schema_version: 1
 id: feature-environment-tracking
 title: Track which environment (develop/staging/production) each feature has reached
 type: feature
-status: deploying
+status: done
 priority: high
 owners: [earlrodsin@gmail.com, ecarino@jairosoft.com]
 estimate_hours: 10
-hours_logged: 16.5
+hours_logged: 16.8
 created: 2026-08-20
 updated: 2026-08-24
 prd_ref: docs/PRD.md#5.2
@@ -99,15 +99,17 @@ lineage at all. See Decisions & risks for why this doesn't reintroduce the
   in `packages/isidore-worker/src/git.ts` and its GitHub-compare-API call
   are removed once AC-007–011 are live — this feature fully replaces that
   mechanism rather than running both in parallel.
-- [ ] AC-013 — Every already-onboarded repo's CI workflow (rapidfire today;
+- [x] AC-013 — Every already-onboarded repo's CI workflow (rapidfire today;
   others as they're onboarded) is updated to the new three-branch trigger
   as a rollout step — an onboarded repo still running the old
   `develop`-only workflow simply never sends environment pings, degrading
   to "environment never advances past whatever ancestry last inferred,"
-  not an ingest failure. **In progress**: `isidore-web` is deployed to
-  production with AC-007–012 live; rapidfire's rollout PR is open
-  (jairosoft-com/rapidfire#271) but not yet merged — AC-013 stays open
-  until it lands.
+  not an ingest failure. Rapidfire done: `isidore-web` is deployed to
+  production with AC-007–012 live, and
+  jairosoft-com/rapidfire#271 merged to `develop` — its
+  `isidore-worker.yml` now triggers on `[develop, staging, main]`. Future
+  onboarded repos get this automatically from `ci-snippet.ts`'s template;
+  no other repo needed retrofitting as of 2026-08-24.
 
 ## Behavior Specifications
 
@@ -172,8 +174,8 @@ Scenario: Plan fields are never sourced from staging or main
   `git.ts`; stop `deriveSnapshot` from touching `features.environment` at
   all so a later `develop` push can never clobber a ping-set value back to
   null (@ecarino@jairosoft.com, est 1h, due 2026-08-24, done 2026-08-24)
-- [ ] Roll out the updated CI workflow to already-onboarded repos
-  (rapidfire first) (@ecarino@jairosoft.com, est 1h)
+- [x] Roll out the updated CI workflow to already-onboarded repos
+  (rapidfire first) (@ecarino@jairosoft.com, est 1h, due 2026-08-24, done 2026-08-24)
 
 ## Daily log
 - 2026-08-20 (@ecarino, 0h): Created from a new requirement — "know which
@@ -329,6 +331,13 @@ Scenario: Plan fields are never sourced from staging or main
   `jairosoft-com` org); switched to the `ecarinoJS` account
   (`gh auth switch`) and it went through. AC-013 stays open until #271
   merges.
+- 2026-08-24 (@ecarino@jairosoft.com, 0.3h): #271's checks were still
+  running (E2E in progress) when asked to merge, so used
+  `gh pr merge --squash --auto` rather than forcing it — merges
+  automatically once required checks pass, without bypassing branch
+  protection. It merged within the same check (`79a11f2`). Confirmed
+  `origin/develop`'s `isidore-worker.yml` now has the three-branch
+  trigger. Closing this item — all 13 ACs done.
 
 ## Decisions & risks
 - **Ancestry, not re-parsed plans, is the signal — by design.** PRD §5.2
