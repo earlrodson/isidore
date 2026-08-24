@@ -3,11 +3,11 @@ schema_version: 1
 id: feature-environment-tracking
 title: Track which environment (develop/staging/production) each feature has reached
 type: feature
-status: validating
+status: deploying
 priority: high
 owners: [earlrodsin@gmail.com, ecarino@jairosoft.com]
 estimate_hours: 10
-hours_logged: 15.5
+hours_logged: 16.5
 created: 2026-08-20
 updated: 2026-08-24
 prd_ref: docs/PRD.md#5.2
@@ -104,7 +104,10 @@ lineage at all. See Decisions & risks for why this doesn't reintroduce the
   as a rollout step — an onboarded repo still running the old
   `develop`-only workflow simply never sends environment pings, degrading
   to "environment never advances past whatever ancestry last inferred,"
-  not an ingest failure.
+  not an ingest failure. **In progress**: `isidore-web` is deployed to
+  production with AC-007–012 live; rapidfire's rollout PR is open
+  (jairosoft-com/rapidfire#271) but not yet merged — AC-013 stays open
+  until it lands.
 
 ## Behavior Specifications
 
@@ -308,6 +311,24 @@ Scenario: Plan fields are never sourced from staging or main
   four. AC-013 (rollout to already-onboarded repos) is still open —
   code alone doesn't help rapidfire until its CI workflow and isidore's
   production deploy both pick this up.
+- 2026-08-24 (@ecarino@jairosoft.com, 1h): Committed + pushed AC-007–012
+  to `earlrodson/isidore` `main` (`4236dc5`), then `vercel --prod`
+  redeployed `isidore-web` — build ran `pnpm db:migrate` against the real
+  production DB, applying `0005_dizzy_steel_serpent.sql`
+  (`environment_pings`); `/api/ingest/environment` confirmed live
+  (401 on an unsigned smoke request, same as `/api/ingest`). For
+  rapidfire: used an isolated `git worktree` off `origin/develop` (its
+  main checkout was mid-flux from someone else's concurrent work all
+  session — never touched that checkout directly) to widen
+  `isidore-worker.yml`'s trigger to `[develop, staging, main]` and
+  rename the push step; opened
+  [jairosoft-com/rapidfire#271](https://github.com/jairosoft-com/rapidfire/pull/271)
+  against `develop` rather than pushing directly, since this repo's
+  history shows everything lands via PR. `gh pr create` initially failed
+  with the active `earlrodson` GitHub CLI account (no access to the
+  `jairosoft-com` org); switched to the `ecarinoJS` account
+  (`gh auth switch`) and it went through. AC-013 stays open until #271
+  merges.
 
 ## Decisions & risks
 - **Ancestry, not re-parsed plans, is the signal — by design.** PRD §5.2
