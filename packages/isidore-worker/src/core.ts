@@ -101,7 +101,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
     prd_ref: file.frontmatter.prd_ref ?? "unspecified",
     status: file.frontmatter.status,
     owners: file.frontmatter.owners,
-    estimate_hours: file.frontmatter.estimate_hours ?? file.frontmatter.timebox_hours ?? 0,
+    estimate_hours: file.frontmatter.estimate_hours ?? 0,
     hours_logged: file.hoursLogged,
     // `environment` is intentionally omitted — feature-environment-tracking.md
     // AC-008/012: it's now set exclusively by environment pings
@@ -116,7 +116,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const generatedAt = new Date(now());
 
   return parseIngestPayload({
-    payload_schema_version: "1.4",
+    payload_schema_version: "1.5",
     provider: params.provider,
     repo_id: params.repoId,
     project: params.project,

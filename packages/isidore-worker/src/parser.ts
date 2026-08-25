@@ -6,13 +6,7 @@ import { parse as parseYaml } from "yaml";
  * makes decisions, never calls an LLM (TECHSTACK.md §3 design constraints).
  */
 
-export type FeatureType =
-  | "feature"
-  | "enabler"
-  | "defect"
-  | "spike"
-  | "experiment"
-  | "prototype";
+export type FeatureType = "feature" | "enabler" | "defect" | "experiment" | "prototype";
 export type FeatureFileStatus =
   | "new"
   | "analyzing"
@@ -37,7 +31,6 @@ export interface FeatureFrontmatter {
   prd_ref?: string;
   owners: string[];
   estimate_hours?: number;
-  timebox_hours?: number;
   created: string;
   target_date?: string;
   updated: string;

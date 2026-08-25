@@ -10,7 +10,7 @@ import { z } from "zod";
  * ever; a later push overwrites, it never forks a new row per week.
  */
 
-export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3", "1.4"] as const;
+export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"] as const;
 
 export const ProviderSchema = z.enum([
   "github",
@@ -53,23 +53,22 @@ export const EnvironmentSchema = z.enum(["develop", "staging", "production"]);
 
 /**
  * docs/specifications/GUIDELINES.md — the item's kind, parsed from
- * `docs/specifications/<slug>.md` frontmatter's `type` key. `feature`/`enabler`
- * are the common case; `defect`/`spike` carry `severity`/`timebox_hours`
- * instead of `priority`/`estimate_hours` in the source file, but always
- * arrive here as a `feature` shape once the worker normalizes them. Added
- * in "1.2", optional so "1.0"/"1.1" payloads without it still validate.
+ * `docs/specifications/<slug>.md` frontmatter's `type` key. `feature`/
+ * `enabler` are the common case; `defect` carries `severity` instead of
+ * `priority` in the source file, but always arrives here as a `feature`
+ * shape once the worker normalizes them. Added in "1.2", optional so
+ * "1.0"/"1.1" payloads without it still validate.
  *
- * `experiment`/`prototype` added in "1.4": rapidfire's docs/specifications/
- * convention split what it used to call `spike` into these two more precise
- * types. `spike` stays supported — other tracked repos still author it —
- * this is a widening, not a replacement (docs/specifications/
- * payload-contract-1-4-experiment-prototype.md).
+ * `experiment`/`prototype` added in "1.4" (then `spike` retired in "1.5"):
+ * rapidfire's docs/specifications/ convention replaced what it used to call
+ * `spike` with these two more precise types, and no tracked repo ever
+ * authored a `spike` file, so "1.5" drops it outright rather than carrying
+ * dead enum weight (docs/specifications/payload-contract-1-5-retire-spike.md).
  */
 export const FeatureTypeSchema = z.enum([
   "feature",
   "enabler",
   "defect",
-  "spike",
   "experiment",
   "prototype",
 ]);

@@ -98,7 +98,7 @@ describe("buildSnapshot", () => {
       ],
     });
 
-    expect(payload.payload_schema_version).toBe("1.4");
+    expect(payload.payload_schema_version).toBe("1.5");
     expect(payload.features[0].type).toBe("defect");
     expect(payload.features[0].severity).toBe("high");
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
@@ -117,7 +117,7 @@ describe("buildSnapshot", () => {
       ],
     });
 
-    expect(payload.payload_schema_version).toBe("1.4");
+    expect(payload.payload_schema_version).toBe("1.5");
     expect(payload.features[0].type).toBe("experiment");
   });
 

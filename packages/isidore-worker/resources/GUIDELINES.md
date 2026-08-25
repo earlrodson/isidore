@@ -10,9 +10,11 @@ life of the item (reclassifying `type` later must not require moving/
 renaming the file).
 
 Copy the matching template to start a new item:
-- `TEMPLATE-feature.md` — for both `feature` and `enabler`
+- `TEMPLATE-feature.md` — for `feature`
+- `TEMPLATE-enabler.md` — for `enabler`
 - `TEMPLATE-defect.md` — for `defect`
-- `TEMPLATE-spike.md` — for `spike`
+- `TEMPLATE-experiment.md` — for `experiment`
+- `TEMPLATE-prototype.md` — for `prototype`
 
 ## Repository contract
 
@@ -33,13 +35,13 @@ Copy the matching template to start a new item:
 schema_version: 1                     # must match "Current schema version" above
 id: <slug>
 title: <human title>
-type: feature | enabler | defect | spike
+type: feature | enabler | defect | experiment | prototype
 status: new | analyzing | ready | implementing | validating | deploying | releasing | done | removed | blocked
 priority: low | medium | high        # defect uses `severity` instead — see below
 ado_id: <ADO work item id>            # omit the key entirely if there is none
 prd_ref: <path>#<section>             # e.g. docs/PRD.md#3 — omit if not sourced from a PRD/BRD
 owners: [<handle>, ...]
-estimate_hours: <number>              # spike: use `timebox_hours` instead
+estimate_hours: <number>
 hours_logged: <number>                 # derived — see rule 1, never hand-edited
 created: <YYYY-MM-DD>
 target_date: <YYYY-MM-DD>             # optional
@@ -50,11 +52,6 @@ updated: <YYYY-MM-DD>                 # bump on every edit
 `defect` frontmatter replaces `priority` with:
 ```yaml
 severity: low | medium | high | critical
-```
-
-`spike` frontmatter replaces `estimate_hours` with:
-```yaml
-timebox_hours: <number>               # hard cap, not an estimate
 ```
 
 Any type may optionally add:
@@ -116,9 +113,9 @@ script computes the reverse join by scanning every file's `relates_to`.
 
 The Isidore worker reads these files on every push and forwards `type`,
 `severity`, and `relates_to` through to the dashboard (ingest payload
-contract `1.3`) — a `defect` or `spike` file shows up there as such, not
-just as an undifferentiated `feature`. It, and any other tool reading
-these files, should:
+contract `1.5`) — a `defect`, `experiment`, or `prototype` file shows up
+there as such, not just as an undifferentiated `feature`. It, and any
+other tool reading these files, should:
 - Glob `docs/specifications/*.md` **excluding** `GUIDELINES.md` and
   `TEMPLATE-*.md` by filename — those two carry placeholder frontmatter,
   not real items.

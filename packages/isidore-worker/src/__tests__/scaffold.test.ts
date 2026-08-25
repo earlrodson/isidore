@@ -13,13 +13,15 @@ import {
 } from "../scaffold.js";
 
 describe("resourcesDir / listCanonicalTemplateFiles", () => {
-  it("bundles GUIDELINES.md and all three TEMPLATE-*.md files", () => {
+  it("bundles GUIDELINES.md and all five TEMPLATE-*.md files", () => {
     const files = listCanonicalTemplateFiles();
     expect(files).toEqual([
       "GUIDELINES.md",
       "TEMPLATE-defect.md",
+      "TEMPLATE-enabler.md",
+      "TEMPLATE-experiment.md",
       "TEMPLATE-feature.md",
-      "TEMPLATE-spike.md",
+      "TEMPLATE-prototype.md",
     ]);
   });
 
@@ -35,8 +37,10 @@ describe("readCanonicalTemplateFiles", () => {
     expect(files.map((f) => f.filename)).toEqual([
       "GUIDELINES.md",
       "TEMPLATE-defect.md",
+      "TEMPLATE-enabler.md",
+      "TEMPLATE-experiment.md",
       "TEMPLATE-feature.md",
-      "TEMPLATE-spike.md",
+      "TEMPLATE-prototype.md",
       TEMPLATES_MANIFEST_FILENAME,
     ]);
 
@@ -71,8 +75,10 @@ describe("initFeaturesFolder", () => {
     expect(result.filesWritten).toEqual([
       "GUIDELINES.md",
       "TEMPLATE-defect.md",
+      "TEMPLATE-enabler.md",
+      "TEMPLATE-experiment.md",
       "TEMPLATE-feature.md",
-      "TEMPLATE-spike.md",
+      "TEMPLATE-prototype.md",
       TEMPLATES_MANIFEST_FILENAME,
     ]);
 

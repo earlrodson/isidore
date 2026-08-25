@@ -55,8 +55,10 @@ Isidore depends on a team-wide folder standard. Repos that do not follow it will
     features/
       GUIDELINES.md          # schema spec — not parsed as a work item
       TEMPLATE-feature.md     # not parsed as a work item
+      TEMPLATE-enabler.md     # not parsed as a work item
       TEMPLATE-defect.md      # not parsed as a work item
-      TEMPLATE-spike.md       # not parsed as a work item
+      TEMPLATE-experiment.md  # not parsed as a work item
+      TEMPLATE-prototype.md   # not parsed as a work item
       auth-refresh.md
       billing-export.md
       login-500-on-retry.md
@@ -76,11 +78,11 @@ Every parseable file (i.e. every file except `GUIDELINES.md` and
 ---
 id: <slug>
 title: <human title>
-type: feature | enabler | defect | spike
+type: feature | enabler | defect | experiment | prototype
 status: new | analyzing | ready | implementing | validating | deploying | releasing | done | removed | blocked
 priority: low | medium | high        # defect uses `severity` instead
 owners: [<handle>, ...]
-estimate_hours: <number>              # spike uses `timebox_hours` instead
+estimate_hours: <number>
 hours_logged: <number>                 # derived from Daily log — never hand-authored
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
