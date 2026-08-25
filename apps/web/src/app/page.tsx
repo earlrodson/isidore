@@ -7,6 +7,16 @@ import {
 } from "@isidore/db";
 import { getDb } from "@/lib/db";
 import { formatDrift, formatHours } from "@/lib/format";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 // Server-fetched on every request — data changes a few times a day
 // (TECHSTACK.md §4.1), so there is no benefit to static generation here.
@@ -22,114 +32,140 @@ export default async function HomePage() {
   ]);
 
   return (
-    <main>
-      <h1>Isidore</h1>
-      {projects.length === 0 ? (
-        <p>No projects onboarded yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>Features done</th>
-              <th>Stale todos</th>
-              <th>Last snapshot</th>
-            </tr>
-          </thead>
-          <tbody>
-            {projects.map((project) => (
-              <tr key={`${project.provider}/${project.repoId}`}>
-                <td>
-                  <Link href={`/projects/${project.provider}/${project.repoId}`}>
-                    {project.name}
-                  </Link>
-                </td>
-                <td>
-                  {project.featuresDone}/{project.featuresTotal}
-                </td>
-                <td>{project.staleTodoCount}</td>
-                <td>{project.lastReceivedAt ? project.lastReceivedAt.toISOString() : "never"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+    <main className="mx-auto max-w-5xl px-6 py-10">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Isidore</h1>
 
-      <h2>Features completed per week</h2>
-      {completedPerWeek.length === 0 ? (
-        <p>No completions recorded yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>Week</th>
-              <th>Completed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {completedPerWeek.map((row) => (
-              <tr key={`${row.provider}/${row.repoId}/${row.week}`}>
-                <td>{row.repoId}</td>
-                <td>{row.week}</td>
-                <td>{row.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <Tabs defaultValue="projects">
+        <TabsList>
+          <TabsTrigger value="projects">Projects</TabsTrigger>
+          <TabsTrigger value="completions">Completions / week</TabsTrigger>
+          <TabsTrigger value="drift">Estimation drift</TabsTrigger>
+          <TabsTrigger value="allocation">Allocation</TabsTrigger>
+        </TabsList>
 
-      <h2>Estimation drift</h2>
-      {estimationDrift.length === 0 ? (
-        <p>No estimate/actual history yet.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Project</th>
-              <th>Week</th>
-              <th>Estimate (h)</th>
-              <th>Logged (h)</th>
-              <th>Drift (h)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {estimationDrift.map((row) => (
-              <tr key={`${row.provider}/${row.repoId}/${row.week}`}>
-                <td>{row.repoId}</td>
-                <td>{row.week}</td>
-                <td>{formatHours(row.estimateHours)}</td>
-                <td>{formatHours(row.hoursLogged)}</td>
-                <td>{formatDrift(row.drift)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <TabsContent value="projects">
+          {projects.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No projects onboarded yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Features done</TableHead>
+                  <TableHead>Stale todos</TableHead>
+                  <TableHead>Last snapshot</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {projects.map((project) => (
+                  <TableRow key={`${project.provider}/${project.repoId}`}>
+                    <TableCell>
+                      <Link
+                        href={`/projects/${project.provider}/${project.repoId}`}
+                        className="font-medium hover:underline"
+                      >
+                        {project.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      {project.featuresDone}/{project.featuresTotal}
+                    </TableCell>
+                    <TableCell>
+                      {project.staleTodoCount > 0 ? (
+                        <Badge variant="destructive">{project.staleTodoCount}</Badge>
+                      ) : (
+                        <Badge variant="success">0</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {project.lastReceivedAt ? project.lastReceivedAt.toISOString() : "never"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </TabsContent>
 
-      <h2>Developer allocation</h2>
-      {allocation.length === 0 ? (
-        <p>No open todos.</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Owner</th>
-              <th>Open todos</th>
-              <th>Open estimate (h)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {allocation.map((row) => (
-              <tr key={row.owner}>
-                <td>{row.owner}</td>
-                <td>{row.openTodoCount}</td>
-                <td>{formatHours(row.openEstimateHours)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+        <TabsContent value="completions">
+          {completedPerWeek.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No completions recorded yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Week</TableHead>
+                  <TableHead>Completed</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {completedPerWeek.map((row) => (
+                  <TableRow key={`${row.provider}/${row.repoId}/${row.week}`}>
+                    <TableCell>{row.repoId}</TableCell>
+                    <TableCell>{row.week}</TableCell>
+                    <TableCell>{row.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </TabsContent>
+
+        <TabsContent value="drift">
+          {estimationDrift.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No estimate/actual history yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Week</TableHead>
+                  <TableHead>Estimate (h)</TableHead>
+                  <TableHead>Logged (h)</TableHead>
+                  <TableHead>Drift (h)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {estimationDrift.map((row) => (
+                  <TableRow key={`${row.provider}/${row.repoId}/${row.week}`}>
+                    <TableCell>{row.repoId}</TableCell>
+                    <TableCell>{row.week}</TableCell>
+                    <TableCell>{formatHours(row.estimateHours)}</TableCell>
+                    <TableCell>{formatHours(row.hoursLogged)}</TableCell>
+                    <TableCell>{formatDrift(row.drift)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </TabsContent>
+
+        <TabsContent value="allocation">
+          {allocation.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No open todos.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Owner</TableHead>
+                  <TableHead>Open todos</TableHead>
+                  <TableHead>Open estimate (h)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {allocation.map((row) => (
+                  <TableRow key={row.owner}>
+                    <TableCell>{row.owner}</TableCell>
+                    <TableCell>{row.openTodoCount}</TableCell>
+                    <TableCell>{formatHours(row.openEstimateHours)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }
