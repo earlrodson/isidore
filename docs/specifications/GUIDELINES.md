@@ -13,6 +13,8 @@ Copy the matching template to start a new item:
 - `TEMPLATE-feature.md` — for both `feature` and `enabler`
 - `TEMPLATE-defect.md` — for `defect`
 - `TEMPLATE-spike.md` — for `spike`
+- `TEMPLATE-experiment.md` — for `experiment`
+- `TEMPLATE-prototype.md` — for `prototype`
 
 ## Repository contract
 
@@ -33,7 +35,7 @@ Copy the matching template to start a new item:
 schema_version: 1                     # must match "Current schema version" above
 id: <slug>
 title: <human title>
-type: feature | enabler | defect | spike
+type: feature | enabler | defect | spike | experiment | prototype
 status: new | analyzing | ready | implementing | validating | deploying | releasing | done | removed | blocked
 priority: low | medium | high        # defect uses `severity` instead — see below
 ado_id: <ADO work item id>            # omit the key entirely if there is none
@@ -116,9 +118,9 @@ script computes the reverse join by scanning every file's `relates_to`.
 
 The Isidore worker reads these files on every push and forwards `type`,
 `severity`, and `relates_to` through to the dashboard (ingest payload
-contract `1.3`) — a `defect` or `spike` file shows up there as such, not
-just as an undifferentiated `feature`. It, and any other tool reading
-these files, should:
+contract `1.4`) — a `defect`, `spike`, `experiment`, or `prototype` file
+shows up there as such, not just as an undifferentiated `feature`. It, and
+any other tool reading these files, should:
 - Glob `docs/specifications/*.md` **excluding** `GUIDELINES.md` and
   `TEMPLATE-*.md` by filename — those two carry placeholder frontmatter,
   not real items.

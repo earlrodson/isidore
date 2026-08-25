@@ -1,0 +1,26 @@
+{
+  "payload_schema_version": "1.4",
+  "provider": "github",
+  "repo_id": "your-org/project-1",
+  "project": "project-1",
+  "week": "2026-W34",
+  "base_branch": "develop",
+  "commit_sha": "a1b2c3d",
+  "generated_at": "2026-08-18T09:00:00+08:00",
+  "timezone": "Asia/Manila",
+  "features": [
+    {
+      "feature_id": "crypto-gateway-experiment",
+      "title": "Automated crypto payment gateway experiment",
+      "prd_ref": "docs/PRD.md#4.2",
+      "status": "new",
+      "owners": ["dev-a"],
+      "estimate_hours": 16,
+      "hours_logged": 0,
+      "type": "experiment",
+      "relates_to": ["auth-refresh"],
+      "todos": [],
+      "open_prs": []
+    }
+  ]
+}

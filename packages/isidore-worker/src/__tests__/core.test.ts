@@ -98,10 +98,27 @@ describe("buildSnapshot", () => {
       ],
     });
 
-    expect(payload.payload_schema_version).toBe("1.3");
+    expect(payload.payload_schema_version).toBe("1.4");
     expect(payload.features[0].type).toBe("defect");
     expect(payload.features[0].severity).toBe("high");
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
+  });
+
+  it("forwards experiment/prototype types (payload contract 1.4)", async () => {
+    const experimentFileContent = featureFileContent
+      .replace("id: auth-refresh", "id: crypto-gateway-experiment")
+      .replace("type: feature", "type: experiment");
+
+    const payload = await buildSnapshot({
+      ...baseParams,
+      cwd: process.cwd(),
+      loadFeatures: () => [
+        { filename: "crypto-gateway-experiment.md", content: experimentFileContent },
+      ],
+    });
+
+    expect(payload.payload_schema_version).toBe("1.4");
+    expect(payload.features[0].type).toBe("experiment");
   });
 
   it("never sets environment — that's owned exclusively by environment pings now (feature-environment-tracking AC-008/012)", async () => {

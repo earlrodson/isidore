@@ -116,7 +116,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const generatedAt = new Date(now());
 
   return parseIngestPayload({
-    payload_schema_version: "1.3",
+    payload_schema_version: "1.4",
     provider: params.provider,
     repo_id: params.repoId,
     project: params.project,

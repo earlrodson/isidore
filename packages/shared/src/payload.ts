@@ -10,7 +10,7 @@ import { z } from "zod";
  * ever; a later push overwrites, it never forks a new row per week.
  */
 
-export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3"] as const;
+export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3", "1.4"] as const;
 
 export const ProviderSchema = z.enum([
   "github",
@@ -58,8 +58,21 @@ export const EnvironmentSchema = z.enum(["develop", "staging", "production"]);
  * instead of `priority`/`estimate_hours` in the source file, but always
  * arrive here as a `feature` shape once the worker normalizes them. Added
  * in "1.2", optional so "1.0"/"1.1" payloads without it still validate.
+ *
+ * `experiment`/`prototype` added in "1.4": rapidfire's docs/specifications/
+ * convention split what it used to call `spike` into these two more precise
+ * types. `spike` stays supported — other tracked repos still author it —
+ * this is a widening, not a replacement (docs/specifications/
+ * payload-contract-1-4-experiment-prototype.md).
  */
-export const FeatureTypeSchema = z.enum(["feature", "enabler", "defect", "spike"]);
+export const FeatureTypeSchema = z.enum([
+  "feature",
+  "enabler",
+  "defect",
+  "spike",
+  "experiment",
+  "prototype",
+]);
 
 /**
  * docs/specifications/GUIDELINES.md — `defect` frontmatter's `severity` key,

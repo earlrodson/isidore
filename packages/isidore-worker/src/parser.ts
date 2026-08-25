@@ -6,7 +6,13 @@ import { parse as parseYaml } from "yaml";
  * makes decisions, never calls an LLM (TECHSTACK.md §3 design constraints).
  */
 
-export type FeatureType = "feature" | "enabler" | "defect" | "spike";
+export type FeatureType =
+  | "feature"
+  | "enabler"
+  | "defect"
+  | "spike"
+  | "experiment"
+  | "prototype";
 export type FeatureFileStatus =
   | "new"
   | "analyzing"

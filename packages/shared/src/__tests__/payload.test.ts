@@ -38,6 +38,12 @@ describe("parseIngestPayload", () => {
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
   });
 
+  it("accepts a 1.4 payload with experiment/prototype types (rapidfire's spike split)", () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-experiment-type.json"));
+    expect(payload.payload_schema_version).toBe("1.4");
+    expect(payload.features[0].type).toBe("experiment");
+  });
+
   it("accepts a 1.1 payload with no type/severity/relates_to field (backward compat)", () => {
     const payload = parseIngestPayload(loadFixture("valid-with-environment.json"));
     expect(payload.features[0].type).toBeUndefined();
