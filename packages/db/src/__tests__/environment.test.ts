@@ -42,7 +42,7 @@ const validSnapshot = parseIngestPayload({
       feature_id: "auth-refresh",
       title: "Refresh token rotation",
       prd_ref: "docs/PRD.md#4.2",
-      status: "implementing",
+      status: "done",
       owners: ["dev-a"],
       estimate_hours: 8,
       hours_logged: 5.5,
@@ -116,6 +116,37 @@ describe("writeEnvironmentPing", () => {
     await writeEnvironmentPing(db, ping({ feature_ids: ["auth-refresh", "does-not-exist"] }));
 
     const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.environment).toBe("staging");
+  });
+
+  it("never advances environment for a feature not yet done (AC-014)", async () => {
+    const inProgressSnapshot = parseIngestPayload({
+      ...validSnapshot,
+      features: [{ ...validSnapshot.features[0], status: "implementing" }],
+    });
+    await writeFeatureSnapshot(db, inProgressSnapshot, inProgressSnapshot.features[0]);
+
+    await writeEnvironmentPing(db, ping({ environment: "production" }));
+
+    const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.environment).toBeNull();
+  });
+
+  it("starts advancing once a feature transitions to done", async () => {
+    const inProgressSnapshot = parseIngestPayload({
+      ...validSnapshot,
+      features: [{ ...validSnapshot.features[0], status: "implementing" }],
+    });
+    await writeFeatureSnapshot(db, inProgressSnapshot, inProgressSnapshot.features[0]);
+    await writeEnvironmentPing(db, ping({ environment: "staging", commit_sha: "stage-wip" }));
+
+    let [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.environment).toBeNull();
+
+    await writeFeatureSnapshot(db, validSnapshot, validSnapshot.features[0]);
+    await writeEnvironmentPing(db, ping({ environment: "staging", commit_sha: "stage-done" }));
+
+    [featureRow] = await db.select().from(schema.features);
     expect(featureRow.environment).toBe("staging");
   });
 });

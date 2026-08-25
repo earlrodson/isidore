@@ -111,6 +111,27 @@ lineage at all. See Decisions & risks for why this doesn't reintroduce the
   onboarded repos get this automatically from `ci-snippet.ts`'s template;
   no other repo needed retrofitting as of 2026-08-24.
 
+**Reopened 2026-08-25 — AC-008/AC-010 undercounted what "reached an
+environment" means.** In practice, a feature's spec file merges to
+`develop` (and from there to `staging`/`main`) well before the feature
+itself is functionally complete — dashboards showed e.g. `implementing
+[production]`, which read as "this half-built feature is live in
+production," not the intended "this ticket's spec file is present on the
+production branch." AC-014 closes that gap: presence-detection (AC-008)
+and monotonicity (AC-010) are unchanged, but a ping now only advances
+`features.environment` for a feature whose `status` is `done` at ping
+time — an in-progress feature's environment stays `null` regardless of
+where its spec file has been merged, and starts advancing from whatever
+ping next arrives once a later `develop` snapshot flips it to `done`.
+
+- [x] AC-014 — `deriveEnvironmentPing` (`packages/db/src/environment.ts`)
+  only applies an incoming ping's environment to a feature whose current
+  `features.status` is `done`; a ping for a feature in any other status is
+  a no-op for that feature (same as AC-011's unknown-feature no-op, just
+  gated on status instead of row-existence). This does not change what
+  the ping itself carries (still just feature ids, per AC-008) — only
+  whether a matched feature's `environment` is written.
+
 ## Behavior Specifications
 
 ```gherkin
@@ -134,6 +155,20 @@ Scenario: A ping for an unknown ticket is a no-op
   When a staging/main push includes that file
   Then no features row is created from the ping alone, and no error is
     raised
+
+Scenario: A ping never advances environment for a not-yet-done feature
+  Given a ticket's status is "implementing" on develop
+  And its spec file has already merged to staging
+  When staging is pushed, triggering an environment ping that includes
+    this ticket's id
+  Then the ticket's environment remains null, not "staging"
+
+Scenario: Environment starts advancing once a feature is marked done
+  Given a ticket's status is "implementing" and its environment is null
+  When a later develop snapshot flips its status to "done"
+  And staging is pushed again, re-triggering an environment ping for the
+    same ticket id
+  Then the ticket's environment advances to "staging"
 
 Scenario: Plan fields are never sourced from staging or main
   Given a ticket's status/todos/estimate_hours differ between develop's

@@ -130,6 +130,7 @@ export async function deriveEnvironmentPing(
       id: schema.features.id,
       featureId: schema.features.featureId,
       environment: schema.features.environment,
+      status: schema.features.status,
     })
     .from(schema.features)
     .where(eq(schema.features.projectId, project.id));
@@ -139,6 +140,11 @@ export async function deriveEnvironmentPing(
   for (const featureId of featureIds) {
     const feature = byFeatureId.get(featureId);
     if (!feature) continue;
+    // A feature's spec file reaching staging/production says nothing about
+    // whether the feature itself is finished — only a `done` feature can
+    // have actually "reached" an environment; an in-progress one merely has
+    // its (possibly stale) spec file sitting there. See AC-014.
+    if (feature.status !== "done") continue;
     if (!outranks(row.environment, feature.environment)) continue;
 
     await tx

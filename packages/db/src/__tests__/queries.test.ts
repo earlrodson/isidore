@@ -132,7 +132,11 @@ describe("getProjectDetail", () => {
   });
 
   it("surfaces a feature's environment as set by an environment ping, or null before any ping arrives (feature-environment-tracking AC-005/008)", async () => {
-    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const fixture = loadFixture("valid.json");
+    const payload = parseIngestPayload({
+      ...fixture,
+      features: [{ ...fixture.features[0], status: "done" }],
+    });
     const feature = payload.features[0];
     await writeFeatureSnapshot(db, payload, feature);
     const detailWithoutEnvironment = await getProjectDetail(db, payload.provider, payload.repo_id);
