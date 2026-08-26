@@ -111,9 +111,9 @@ describe("writeFeatureSnapshot", () => {
     expect(featureRow.environment).toBeNull();
   });
 
-  it("never clobbers an environment already set by a ping, on a later develop snapshot", async () => {
+  it("never clobbers an environment already set by a ping, on a later develop snapshot that keeps status done", async () => {
     const payload = parseIngestPayload(loadFixture("valid.json"));
-    const feature = payload.features[0];
+    const feature = { ...payload.features[0], status: "done" as const };
     await writeFeatureSnapshot(db, payload, feature);
 
     const [before] = await db.select().from(schema.features);
@@ -128,6 +128,25 @@ describe("writeFeatureSnapshot", () => {
     const [after] = await db.select().from(schema.features);
     expect(after.environment).toBe("production");
     expect(after.hoursLogged).toBe(8);
+  });
+
+  it("clears a stale environment when a done feature's status regresses (reopened)", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = { ...payload.features[0], status: "done" as const };
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [before] = await db.select().from(schema.features);
+    await db
+      .update(schema.features)
+      .set({ environment: "production" })
+      .where(sql`${schema.features.id} = ${before.id}`);
+
+    const reopenedFeature = { ...feature, status: "implementing" as const };
+    await writeFeatureSnapshot(db, payload, reopenedFeature);
+
+    const [after] = await db.select().from(schema.features);
+    expect(after.status).toBe("implementing");
+    expect(after.environment).toBeNull();
   });
 
   it("defaults type/severity/relatesTo to null when the payload doesn't carry them (pre-1.2 backward compat)", async () => {

@@ -62,10 +62,18 @@ export async function deriveSnapshot(
         severity: feature.severity ?? null,
         relatesTo: feature.relates_to ?? null,
         updatedAt: sql`now()`,
-        // `environment` is deliberately absent here — it's owned
-        // exclusively by `deriveEnvironmentPing` (feature-environment-
-        // tracking.md AC-008/010) now, never by the develop snapshot path,
-        // so a later develop push must never clobber it back to null.
+        // `environment` is otherwise owned exclusively by
+        // `deriveEnvironmentPing` (feature-environment-tracking.md
+        // AC-008/010), never by this develop snapshot path — except this
+        // one regression case: a feature's spec can flip from `done` back
+        // to an earlier status (reopened), at which point whatever
+        // environment a prior ping recorded no longer reflects reality
+        // (the "shipped" claim was tied to the now-superseded `done`
+        // state). Clear it here rather than leaving a stale
+        // develop/staging/production badge on an unfinished feature; it
+        // starts advancing again once a later snapshot flips status back
+        // to `done` and a subsequent ping arrives.
+        environment: feature.status === "done" ? sql`${schema.features.environment}` : null,
       },
     })
     .returning();
