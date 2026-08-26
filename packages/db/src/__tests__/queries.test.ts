@@ -183,6 +183,30 @@ describe("getProjectDetail", () => {
     expect(defectFeature?.severity).toBe("high");
     expect(defectFeature?.relatesTo).toEqual(["auth-refresh"]);
   });
+
+  it("surfaces a feature's priority, or null when the payload predates 1.6", async () => {
+    const payload = parseIngestPayload(loadFixture("valid.json"));
+    const feature = payload.features[0];
+    await writeFeatureSnapshot(db, payload, feature);
+    const detailWithoutPriority = await getProjectDetail(db, payload.provider, payload.repo_id);
+    const unprioritizedFeature = detailWithoutPriority?.features.find(
+      (f) => f.featureId === "auth-refresh",
+    );
+    expect(unprioritizedFeature?.priority).toBeNull();
+
+    const prioritizedPayload = parseIngestPayload(loadFixture("valid-with-priority.json"));
+    const prioritizedFeature = prioritizedPayload.features[0];
+    await writeFeatureSnapshot(db, prioritizedPayload, prioritizedFeature);
+    const detailWithPriority = await getProjectDetail(
+      db,
+      prioritizedPayload.provider,
+      prioritizedPayload.repo_id,
+    );
+    const highPriorityFeature = detailWithPriority?.features.find(
+      (f) => f.featureId === "auth-refresh",
+    );
+    expect(highPriorityFeature?.priority).toBe("high");
+  });
 });
 
 describe("listFeaturesCompletedPerWeek", () => {

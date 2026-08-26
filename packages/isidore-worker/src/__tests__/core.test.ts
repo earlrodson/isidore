@@ -72,6 +72,7 @@ describe("buildSnapshot", () => {
     ]);
     expect(feature.open_prs).toEqual([]);
     expect(feature.prd_ref).toBe("docs/PRD.md#4.2");
+    expect(feature.priority).toBe("high");
   });
 
   it("falls back to a placeholder prd_ref when the frontmatter omits it (GUIDELINES.md allows omission)", async () => {
@@ -98,7 +99,7 @@ describe("buildSnapshot", () => {
       ],
     });
 
-    expect(payload.payload_schema_version).toBe("1.5");
+    expect(payload.payload_schema_version).toBe("1.6");
     expect(payload.features[0].type).toBe("defect");
     expect(payload.features[0].severity).toBe("high");
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
@@ -117,7 +118,7 @@ describe("buildSnapshot", () => {
       ],
     });
 
-    expect(payload.payload_schema_version).toBe("1.5");
+    expect(payload.payload_schema_version).toBe("1.6");
     expect(payload.features[0].type).toBe("experiment");
   });
 

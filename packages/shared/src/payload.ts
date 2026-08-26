@@ -10,7 +10,7 @@ import { z } from "zod";
  * ever; a later push overwrites, it never forks a new row per week.
  */
 
-export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"] as const;
+export const SUPPORTED_PAYLOAD_SCHEMA_VERSIONS = ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5", "1.6"] as const;
 
 export const ProviderSchema = z.enum([
   "github",
@@ -79,6 +79,14 @@ export const FeatureTypeSchema = z.enum([
  */
 export const SeveritySchema = z.enum(["low", "medium", "high", "critical"]);
 
+/**
+ * docs/specifications/GUIDELINES.md — `feature`/`enabler` frontmatter's
+ * `priority` key (parser.ts already parsed this; "1.6" is the first version
+ * that forwards it into the payload). Added in "1.6", optional so earlier
+ * senders without it still validate.
+ */
+export const PrioritySchema = z.enum(["low", "medium", "high"]);
+
 export const OpenPrSchema = z.object({
   number: z.number().int().positive(),
   state: OpenPrStateSchema,
@@ -105,6 +113,7 @@ export const FeatureSchema = z.object({
   environment: EnvironmentSchema.nullable().optional(),
   type: FeatureTypeSchema.optional(),
   severity: SeveritySchema.optional(),
+  priority: PrioritySchema.optional(),
   relates_to: z.array(z.string().min(1)).optional(),
   todos: z.array(TodoSchema),
   open_prs: z.array(OpenPrSchema),
@@ -182,6 +191,7 @@ export type FeatureStatus = z.infer<typeof FeatureStatusSchema>;
 export type Environment = z.infer<typeof EnvironmentSchema>;
 export type FeatureType = z.infer<typeof FeatureTypeSchema>;
 export type Severity = z.infer<typeof SeveritySchema>;
+export type Priority = z.infer<typeof PrioritySchema>;
 export type OpenPr = z.infer<typeof OpenPrSchema>;
 export type Todo = z.infer<typeof TodoSchema>;
 export type Feature = z.infer<typeof FeatureSchema>;

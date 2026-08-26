@@ -131,6 +131,9 @@ export const features = pgTable(
     // to. Null for pre-1.2 senders that never set them.
     type: text("type"),
     severity: text("severity"),
+    // payload contract 1.6 — feature/enabler priority. Null for pre-1.6
+    // senders that never set it.
+    priority: text("priority"),
     relatesTo: jsonb("relates_to"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

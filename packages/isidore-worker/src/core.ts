@@ -108,6 +108,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
     // (environment-ping.ts), never inferred during a develop snapshot.
     type: file.frontmatter.type,
     severity: file.frontmatter.severity,
+    priority: file.frontmatter.priority,
     relates_to: file.frontmatter.relates_to,
     todos: file.todos.map(toTodo),
     open_prs: openPrsByFeature[file.frontmatter.id] ?? [],
@@ -116,7 +117,7 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const generatedAt = new Date(now());
 
   return parseIngestPayload({
-    payload_schema_version: "1.5",
+    payload_schema_version: "1.6",
     provider: params.provider,
     repo_id: params.repoId,
     project: params.project,

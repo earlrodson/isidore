@@ -47,6 +47,7 @@ export async function deriveSnapshot(
       openPrs: feature.open_prs,
       type: feature.type ?? null,
       severity: feature.severity ?? null,
+      priority: feature.priority ?? null,
       relatesTo: feature.relates_to ?? null,
     })
     .onConflictDoUpdate({
@@ -60,6 +61,7 @@ export async function deriveSnapshot(
         openPrs: feature.open_prs,
         type: feature.type ?? null,
         severity: feature.severity ?? null,
+        priority: feature.priority ?? null,
         relatesTo: feature.relates_to ?? null,
         updatedAt: sql`now()`,
         // `environment` is otherwise owned exclusively by

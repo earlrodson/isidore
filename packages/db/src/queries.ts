@@ -98,6 +98,7 @@ export interface ProjectDetailFeature {
   environment: string | null;
   type: string | null;
   severity: string | null;
+  priority: string | null;
   relatesTo: unknown;
   owners: string[];
   createdAt: Date;
@@ -155,6 +156,7 @@ export async function getProjectDetail(
       environment: feature.environment,
       type: feature.type,
       severity: feature.severity,
+      priority: feature.priority,
       relatesTo: feature.relatesTo,
       owners: ownersByFeature.get(feature.id) ?? [],
       createdAt: feature.createdAt,

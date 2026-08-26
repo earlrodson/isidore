@@ -38,6 +38,12 @@ describe("parseIngestPayload", () => {
     expect(payload.features[0].relates_to).toEqual(["auth-refresh"]);
   });
 
+  it("accepts a 1.6 payload with a feature priority", () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-priority.json"));
+    expect(payload.payload_schema_version).toBe("1.6");
+    expect(payload.features[0].priority).toBe("high");
+  });
+
   it("accepts a 1.4 payload with experiment/prototype types (rapidfire's spike split)", () => {
     const payload = parseIngestPayload(loadFixture("valid-with-experiment-type.json"));
     expect(payload.payload_schema_version).toBe("1.4");

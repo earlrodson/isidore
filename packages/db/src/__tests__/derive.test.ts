@@ -149,7 +149,7 @@ describe("writeFeatureSnapshot", () => {
     expect(after.environment).toBeNull();
   });
 
-  it("defaults type/severity/relatesTo to null when the payload doesn't carry them (pre-1.2 backward compat)", async () => {
+  it("defaults type/severity/priority/relatesTo to null when the payload doesn't carry them (pre-1.2 backward compat)", async () => {
     const payload = parseIngestPayload(loadFixture("valid.json"));
     const feature = payload.features[0];
 
@@ -158,7 +158,18 @@ describe("writeFeatureSnapshot", () => {
     const [featureRow] = await db.select().from(schema.features);
     expect(featureRow.type).toBeNull();
     expect(featureRow.severity).toBeNull();
+    expect(featureRow.priority).toBeNull();
     expect(featureRow.relatesTo).toBeNull();
+  });
+
+  it("persists a 1.6 payload's priority", async () => {
+    const payload = parseIngestPayload(loadFixture("valid-with-priority.json"));
+    const feature = payload.features[0];
+
+    await writeFeatureSnapshot(db, payload, feature);
+
+    const [featureRow] = await db.select().from(schema.features);
+    expect(featureRow.priority).toBe("high");
   });
 
   it("persists a 1.2 payload's type/severity/relatesTo", async () => {

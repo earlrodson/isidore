@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { EnvironmentSchema, FeatureStatusSchema } from "@isidore/shared";
+import { EnvironmentSchema, FeatureStatusSchema, PrioritySchema, SeveritySchema } from "@isidore/shared";
 import type { ProjectDetailFeature } from "@isidore/db";
 import { formatHours } from "@/lib/format";
 import { isStatusStale } from "@/lib/feature-status";
@@ -42,6 +42,8 @@ interface FeatureFiltersProps {
 export function FeatureFilters({ features }: FeatureFiltersProps) {
   const [status, setStatus] = useState(ALL);
   const [environment, setEnvironment] = useState(ALL);
+  const [severity, setSeverity] = useState(ALL);
+  const [priority, setPriority] = useState(ALL);
   const [owner, setOwner] = useState(ALL);
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
@@ -57,17 +59,30 @@ export function FeatureFilters({ features }: FeatureFiltersProps) {
     return features.filter((feature) => {
       if (status !== ALL && feature.status !== status) return false;
       if (environment !== ALL && feature.environment !== environment) return false;
+      if (severity !== ALL && feature.severity !== severity) return false;
+      if (priority !== ALL && feature.priority !== priority) return false;
       if (owner !== ALL && !feature.owners.includes(owner)) return false;
       const createdOn = feature.createdAt.toISOString().slice(0, 10);
       if (!inRange(createdOn, createdFrom, createdTo)) return false;
       if (!inRange(targetDate(feature), targetFrom, targetTo)) return false;
       return true;
     });
-  }, [features, status, environment, owner, createdFrom, createdTo, targetFrom, targetTo]);
+  }, [
+    features,
+    status,
+    environment,
+    severity,
+    priority,
+    owner,
+    createdFrom,
+    createdTo,
+    targetFrom,
+    targetTo,
+  ]);
 
   return (
     <div className="mb-10 flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-4 rounded-md border border-border bg-card p-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 rounded-md border border-border bg-card p-4 sm:grid-cols-3 lg:grid-cols-8">
         <div className="flex flex-col gap-1">
           <Label htmlFor="filter-status">Status</Label>
           <select
@@ -95,6 +110,40 @@ export function FeatureFilters({ features }: FeatureFiltersProps) {
           >
             <option value={ALL}>All</option>
             {EnvironmentSchema.options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="filter-severity">Severity</Label>
+          <select
+            id="filter-severity"
+            className={selectClassName}
+            value={severity}
+            onChange={(event) => setSeverity(event.target.value)}
+          >
+            <option value={ALL}>All</option>
+            {SeveritySchema.options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="filter-priority">Priority</Label>
+          <select
+            id="filter-priority"
+            className={selectClassName}
+            value={priority}
+            onChange={(event) => setPriority(event.target.value)}
+          >
+            <option value={ALL}>All</option>
+            {PrioritySchema.options.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -179,6 +228,7 @@ export function FeatureFilters({ features }: FeatureFiltersProps) {
                 )}
                 <Badge variant="secondary">{feature.environment ?? "unknown"}</Badge>
                 {feature.severity && <Badge variant="destructive">{feature.severity}</Badge>}
+                {feature.priority && <Badge variant="outline">{feature.priority}</Badge>}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2 text-sm">
