@@ -165,6 +165,39 @@ updated: 2026-08-18
     expect(() => parseFeatureFile(content)).toThrow(FeatureFileParseError);
   });
 
+  it("drops a nested annotation bullet under a todo instead of merging it", () => {
+    const content = `---
+schema_version: 1
+id: with-annotation
+title: With annotation
+type: feature
+status: done
+owners: [a]
+created: 2026-08-18
+updated: 2026-08-18
+---
+
+## Todos
+- [x] ship it (@a, est 2h, due 2026-08-20, done 2026-08-19)
+  - AC: this is a nested note, not a continuation of the description above.
+- [ ] do the next thing (@a, est 1h)
+
+## Daily log
+- 2026-08-19 (@a, 2h): shipped it
+`;
+    const parsed = parseFeatureFile(content);
+    expect(parsed.todos).toHaveLength(2);
+    expect(parsed.todos[0]).toEqual({
+      description: "ship it",
+      owner: "a",
+      estimateHours: 2,
+      due: "2026-08-20",
+      done: true,
+      doneDate: "2026-08-19",
+    });
+    expect(parsed.todos[1].description).toBe("do the next thing");
+  });
+
   it("parses a due date and a done date on completed todos", () => {
     const content = `---
 schema_version: 1

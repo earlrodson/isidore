@@ -115,6 +115,12 @@ function findSection(body: string, heading: string): string | null {
  * Item lines may be hard-wrapped across multiple raw lines for readability
  * (indented continuation lines with no leading `- `). Rejoins each into a
  * single logical line before matching against the fixed formats.
+ *
+ * An indented line that itself starts with `- ` (e.g. a nested `- AC: ...`
+ * annotation bullet under a todo) is not a wrapped continuation of the
+ * description — it's a distinct sub-item outside the fixed format entirely.
+ * Dropped rather than merged, so it can't corrupt the parent line's match
+ * (see docs/specifications/GUIDELINES.md rule 2, "no other shapes").
  */
 function reflowItems(section: string): string[] {
   const items: string[] = [];
@@ -122,6 +128,8 @@ function reflowItems(section: string): string[] {
     if (!rawLine.trim()) continue;
     if (/^- /.test(rawLine)) {
       items.push(rawLine.trim());
+    } else if (/^\s+- /.test(rawLine)) {
+      continue;
     } else if (items.length > 0) {
       items[items.length - 1] += ` ${rawLine.trim()}`;
     }
