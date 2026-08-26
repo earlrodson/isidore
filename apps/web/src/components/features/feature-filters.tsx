@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { EnvironmentSchema, FeatureStatusSchema } from "@isidore/shared";
 import type { ProjectDetailFeature } from "@isidore/db";
 import { formatHours } from "@/lib/format";
+import { isStatusStale } from "@/lib/feature-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -171,6 +172,11 @@ export function FeatureFilters({ features }: FeatureFiltersProps) {
                 {feature.type && <Badge variant="outline">{feature.type}</Badge>}
                 <span>{feature.title}</span>
                 <Badge variant={statusBadgeVariant(feature.status)}>{feature.status}</Badge>
+                {isStatusStale(feature) && (
+                  <Badge variant="destructive" title="Every todo is done but status was never bumped forward">
+                    status stale
+                  </Badge>
+                )}
                 <Badge variant="secondary">{feature.environment ?? "unknown"}</Badge>
                 {feature.severity && <Badge variant="destructive">{feature.severity}</Badge>}
               </CardTitle>

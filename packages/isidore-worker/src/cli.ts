@@ -3,6 +3,7 @@ import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { buildContext, UnknownFeatureIdError } from "./context.js";
+import { findStatusDrift, formatStatusDrift } from "./lint.js";
 import {
   FeaturesFolderExistsError,
   initFeaturesFolder,
@@ -11,9 +12,10 @@ import {
 /**
  * `isi` CLI (TECHSTACK.md §3.1). Commands: `isi init` scaffolds
  * `docs/specifications/` for a newly onboarded repo; `isi context` dumps its open
- * items as markdown for any CLI-based coding agent to consume. `isi push`
- * (the manual override for `core.ts`'s `runWorker`) is tracked separately
- * and not yet implemented.
+ * items as markdown for any CLI-based coding agent to consume; `isi lint`
+ * flags items whose todos are all done but whose status was never bumped.
+ * `isi push` (the manual override for `core.ts`'s `runWorker`) is tracked
+ * separately and not yet implemented.
  */
 
 function printInitHelp(): void {
@@ -41,6 +43,19 @@ function printContextHelp(): void {
       "                every item with an open status and remaining todos",
       "",
       "Example: isi context | claude -p \"implement the remaining todos above\"",
+    ].join("\n"),
+  );
+}
+
+function printLintHelp(): void {
+  console.log(
+    [
+      "isi lint — flag docs/specifications/ items where every todo is done",
+      "but status was never bumped forward (GUIDELINES.md rule 4)",
+      "",
+      "Usage: isi lint",
+      "",
+      "Exits non-zero if any drifted item is found.",
     ].join("\n"),
   );
 }
@@ -92,8 +107,22 @@ export async function main(argv: string[]): Promise<void> {
     return;
   }
 
+  if (command === "lint") {
+    if (rest.includes("--help")) {
+      printLintHelp();
+      return;
+    }
+    const featuresDir = join(process.cwd(), "docs", "specifications");
+    const drifted = findStatusDrift({ featuresDir });
+    console.log(formatStatusDrift(drifted));
+    if (drifted.length > 0) {
+      process.exitCode = 1;
+    }
+    return;
+  }
+
   console.error(
-    `isi: unknown command "${command ?? ""}" — expected "init" or "context"`,
+    `isi: unknown command "${command ?? ""}" — expected "init", "context", or "lint"`,
   );
   process.exitCode = 1;
 }
