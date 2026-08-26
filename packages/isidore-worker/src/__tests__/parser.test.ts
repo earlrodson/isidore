@@ -199,6 +199,57 @@ updated: 2026-08-18
     expect(parsed.todos[1].description).toBe("do the next thing");
   });
 
+  it("throws on an invalid status value", () => {
+    const content = `---
+schema_version: 1
+id: bad-status
+title: Bad status
+type: feature
+status: planned
+owners: [a]
+created: 2026-08-18
+updated: 2026-08-18
+---
+
+## Todos
+- [ ] do the thing (@a, est 1h)
+`;
+    expect(() => parseFeatureFile(content)).toThrow(FeatureFileParseError);
+    expect(() => parseFeatureFile(content)).toThrow(/Invalid frontmatter status/);
+  });
+
+  it("throws on an invalid type value", () => {
+    const content = `---
+schema_version: 1
+id: bad-type
+title: Bad type
+type: bug
+status: new
+owners: [a]
+created: 2026-08-18
+updated: 2026-08-18
+---
+`;
+    expect(() => parseFeatureFile(content)).toThrow(/Invalid frontmatter type/);
+  });
+
+  it("throws on an invalid severity value but allows an absent one", () => {
+    const base = (severity?: string) => `---
+schema_version: 1
+id: sev-test
+title: Sev test
+type: defect
+status: new
+owners: [a]
+created: 2026-08-18
+updated: 2026-08-18${severity ? `\nseverity: ${severity}` : ""}
+---
+`;
+    expect(() => parseFeatureFile(base("catastrophic"))).toThrow(/Invalid frontmatter severity/);
+    expect(() => parseFeatureFile(base())).not.toThrow();
+    expect(() => parseFeatureFile(base("high"))).not.toThrow();
+  });
+
   it("parses a due date and a done date on completed todos", () => {
     const content = `---
 schema_version: 1

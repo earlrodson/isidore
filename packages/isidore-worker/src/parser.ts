@@ -70,6 +70,31 @@ export interface ParsedFeatureFile {
 
 const FRONTMATTER_RE = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/;
 
+const VALID_TYPES: ReadonlySet<string> = new Set([
+  "feature",
+  "enabler",
+  "defect",
+  "experiment",
+  "prototype",
+]);
+
+const VALID_STATUSES: ReadonlySet<string> = new Set([
+  "new",
+  "analyzing",
+  "ready",
+  "implementing",
+  "validating",
+  "deploying",
+  "releasing",
+  "done",
+  "removed",
+  "blocked",
+]);
+
+const VALID_PRIORITIES: ReadonlySet<string> = new Set(["low", "medium", "high"]);
+
+const VALID_SEVERITIES: ReadonlySet<string> = new Set(["low", "medium", "high", "critical"]);
+
 const TODO_LINE_RE =
   /^- \[( |x)\] (.+?) \(@([^,]+), est (\d+(?:\.\d+)?)h(?:, due (\d{4}-\d{2}-\d{2}))?(?:, done (\d{4}-\d{2}-\d{2}))?\)$/;
 
@@ -178,6 +203,30 @@ function parseDailyLog(section: string | null): FeatureDailyLogEntry[] {
   return entries;
 }
 
+/**
+ * `type`/`status`/`priority`/`severity` are all TS union types at parse time
+ * only — `parseYaml` + a cast never actually checks the string it read is one
+ * of the allowed values. Without this, an invalid value (e.g. a stale
+ * "planned" predating a GUIDELINES.md enum change) parses silently and
+ * reaches the dashboard as-is instead of failing loudly here.
+ */
+function validateEnumField(
+  field: string,
+  value: unknown,
+  allowed: ReadonlySet<string>,
+  optional: boolean,
+): void {
+  if (value === undefined) {
+    if (optional) return;
+    throw new FeatureFileParseError(`Missing required frontmatter field: ${field}`);
+  }
+  if (typeof value !== "string" || !allowed.has(value)) {
+    throw new FeatureFileParseError(
+      `Invalid frontmatter ${field}: ${JSON.stringify(value)} (expected one of ${[...allowed].join(", ")})`,
+    );
+  }
+}
+
 /** Parses a single docs/specifications/<slug>.md file's raw text content. */
 export function parseFeatureFile(content: string): ParsedFeatureFile {
   const match = content.match(FRONTMATTER_RE);
@@ -190,6 +239,10 @@ export function parseFeatureFile(content: string): ParsedFeatureFile {
   if (!frontmatter || typeof frontmatter !== "object") {
     throw new FeatureFileParseError("Frontmatter did not parse to an object");
   }
+  validateEnumField("type", frontmatter.type, VALID_TYPES, false);
+  validateEnumField("status", frontmatter.status, VALID_STATUSES, false);
+  validateEnumField("priority", frontmatter.priority, VALID_PRIORITIES, true);
+  validateEnumField("severity", frontmatter.severity, VALID_SEVERITIES, true);
 
   const description = findSection(body, "Description") ?? "";
   const acceptanceCriteria = findSection(body, "Acceptance criteria") ?? "";
