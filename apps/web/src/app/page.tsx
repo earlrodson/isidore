@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
+  listAccessibleProjectsForEmail,
   listDeveloperAllocation,
   listEstimationDrift,
   listFeaturesCompletedPerWeek,
@@ -7,6 +9,7 @@ import {
 } from "@isidore/db";
 import { getDb } from "@/lib/db";
 import { formatDrift, formatHours } from "@/lib/format";
+import { getCurrentViewer } from "@/lib/current-viewer";
 import {
   Table,
   TableBody,
@@ -22,14 +25,61 @@ import { Badge } from "@/components/ui/badge";
 // (TECHSTACK.md §4.1), so there is no benefit to static generation here.
 export const dynamic = "force-dynamic";
 
+function repoKey(provider: string, repoId: string): string {
+  return `${provider} ${repoId}`;
+}
+
+function mergeAllocation(
+  perProject: Array<Awaited<ReturnType<typeof listDeveloperAllocation>>>,
+): Awaited<ReturnType<typeof listDeveloperAllocation>> {
+  const byOwner = new Map<string, { owner: string; openTodoCount: number; openEstimateHours: number }>();
+  for (const rows of perProject) {
+    for (const row of rows) {
+      const existing = byOwner.get(row.owner);
+      if (existing) {
+        existing.openTodoCount += row.openTodoCount;
+        existing.openEstimateHours += row.openEstimateHours;
+      } else {
+        byOwner.set(row.owner, { ...row });
+      }
+    }
+  }
+  return Array.from(byOwner.values()).sort((a, b) => a.owner.localeCompare(b.owner));
+}
+
 export default async function HomePage() {
+  const viewer = await getCurrentViewer();
+  if (!viewer) {
+    redirect("/login");
+  }
+
   const db = getDb();
-  const [projects, completedPerWeek, estimationDrift, allocation] = await Promise.all([
-    listProjectSummaries(db),
-    listFeaturesCompletedPerWeek(db),
-    listEstimationDrift(db),
-    listDeveloperAllocation(db),
-  ]);
+  const [allProjects, allCompletedPerWeek, allEstimationDrift, allAllocation, accessible] =
+    await Promise.all([
+      listProjectSummaries(db),
+      listFeaturesCompletedPerWeek(db),
+      listEstimationDrift(db),
+      listDeveloperAllocation(db),
+      listAccessibleProjectsForEmail(db, viewer.email),
+    ]);
+
+  // AC-008: every table is filtered down to only the projects this email
+  // has a repo_access grant for, re-read fresh on every load (never cached
+  // in the session) so a revoked grant disappears immediately.
+  const allowed = new Set(accessible.map((project) => repoKey(project.provider, project.repoId)));
+  const projects = allProjects.filter((project) => allowed.has(repoKey(project.provider, project.repoId)));
+  const completedPerWeek = allCompletedPerWeek.filter((row) => allowed.has(repoKey(row.provider, row.repoId)));
+  const estimationDrift = allEstimationDrift.filter((row) => allowed.has(repoKey(row.provider, row.repoId)));
+  // Allocation is aggregated per-owner across every project in scope, so it
+  // can't be filtered client-side the way the other tables are (an owner's
+  // row would still include hours from projects this viewer can't see) —
+  // re-query per accessible project and merge the sums instead.
+  const allocation =
+    allowed.size === allProjects.length
+      ? allAllocation
+      : mergeAllocation(
+          await Promise.all(projects.map((project) => listDeveloperAllocation(db, project))),
+        );
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">

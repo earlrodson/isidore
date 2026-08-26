@@ -1,12 +1,14 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   getProjectDetail,
+  isEmailGrantedToProject,
   listDeveloperAllocation,
   listEstimationDrift,
   listFeaturesCompletedPerWeek,
 } from "@isidore/db";
 import { getDb } from "@/lib/db";
 import { formatDrift, formatHours } from "@/lib/format";
+import { getCurrentViewer } from "@/lib/current-viewer";
 import { FeatureFilters } from "@/components/features/feature-filters";
 import {
   Table,
@@ -27,7 +29,18 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
   const { provider, repoId: repoIdSegments } = await params;
   const repoId = repoIdSegments.join("/");
 
+  const viewer = await getCurrentViewer();
+  if (!viewer) {
+    redirect("/login");
+  }
+
   const db = getDb();
+  // AC-009: a project this viewer has no grant for behaves identically to
+  // a project that doesn't exist — never leak existence via a 403.
+  if (!(await isEmailGrantedToProject(db, { email: viewer.email, provider, repoId }))) {
+    notFound();
+  }
+
   const scope = { provider, repoId };
   const [project, completedPerWeek, estimationDrift, allocation] = await Promise.all([
     getProjectDetail(db, provider, repoId),

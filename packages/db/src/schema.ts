@@ -380,6 +380,65 @@ export const githubInstallations = pgTable(
 );
 
 /**
+ * Viewer identity (docs/specifications/viewer-magic-link-access.md).
+ * Deliberately disjoint from `users`/`sessions`/`github_installations`:
+ * those authenticate repo *owners* connecting a repo via the GitHub App;
+ * these authenticate dashboard *viewers* reading data about a repo someone
+ * else already connected. The viewer's identity is just their email — no
+ * separate `viewers` table, since email is the only fact that matters for
+ * granting access.
+ */
+export const magicLinks = pgTable("magic_links", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Viewer session, looked up by a hash of the cookie's bearer token — same
+ * raw-token-never-persisted posture as `sessions`. Kept as its own table
+ * (and its own cookie, set in apps/web/src/lib/viewer-session.ts) so a
+ * viewer session can never be confused with an onboarding session.
+ */
+export const viewerSessions = pgTable("viewer_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * Admin-managed email → project grant. Bindable before the viewer has ever
+ * logged in (an admin grants by email, not by an existing viewer row), and
+ * re-read from the DB on every gated page load — no grant is ever cached
+ * in the session/cookie, so revocation is immediate.
+ */
+export const repoAccess = pgTable(
+  "repo_access",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("repo_access_email_project_key").on(table.email, table.projectId),
+  ],
+);
+
+/**
  * Seen nonces for replay protection (TECHSTACK.md §7). A unique constraint
  * on `provider + repo_id + nonce` makes "have we seen this before" an
  * atomic insert rather than a check-then-write race.

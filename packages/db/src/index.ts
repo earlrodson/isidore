@@ -6,5 +6,6 @@ export * from "./hash.js";
 export * from "./nonces.js";
 export * from "./queries.js";
 export * from "./repo-secrets.js";
+export * from "./viewer-auth.js";
 export * from "./write.js";
 export * as schema from "./schema.js";
