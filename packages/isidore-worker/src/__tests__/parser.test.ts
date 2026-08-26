@@ -179,7 +179,8 @@ updated: 2026-08-18
 
 ## Todos
 - [x] ship it (@a, est 2h, due 2026-08-20, done 2026-08-19)
-  - AC: this is a nested note, not a continuation of the description above.
+  - AC: this is a nested note, not a continuation of the description above,
+    and it hard-wraps across multiple raw lines just like a real one.
 - [ ] do the next thing (@a, est 1h)
 
 ## Daily log

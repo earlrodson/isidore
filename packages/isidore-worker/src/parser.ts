@@ -120,15 +120,21 @@ function findSection(body: string, heading: string): string | null {
  * annotation bullet under a todo) is not a wrapped continuation of the
  * description — it's a distinct sub-item outside the fixed format entirely.
  * Dropped rather than merged, so it can't corrupt the parent line's match
- * (see docs/specifications/GUIDELINES.md rule 2, "no other shapes").
+ * (see docs/specifications/GUIDELINES.md rule 2, "no other shapes"). Its own
+ * hard-wrapped continuation lines (further-indented, no leading `- `) are
+ * dropped along with it, until the next top-level `- ` bullet.
  */
 function reflowItems(section: string): string[] {
   const items: string[] = [];
+  let inNestedBullet = false;
   for (const rawLine of section.split("\n")) {
     if (!rawLine.trim()) continue;
     if (/^- /.test(rawLine)) {
       items.push(rawLine.trim());
+      inNestedBullet = false;
     } else if (/^\s+- /.test(rawLine)) {
+      inNestedBullet = true;
+    } else if (inNestedBullet) {
       continue;
     } else if (items.length > 0) {
       items[items.length - 1] += ` ${rawLine.trim()}`;
