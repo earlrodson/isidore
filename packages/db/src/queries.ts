@@ -99,6 +99,8 @@ export interface ProjectDetailFeature {
   type: string | null;
   severity: string | null;
   relatesTo: unknown;
+  owners: string[];
+  createdAt: Date;
   todos: ProjectDetailTodo[];
 }
 
@@ -133,10 +135,11 @@ export async function getProjectDetail(
     .where(eq(schema.features.projectId, project.id))
     .orderBy(schema.features.featureId);
 
-  const todosByFeature = await loadTodosByFeature(
-    db,
-    featureRows.map((feature) => feature.id),
-  );
+  const featureIds = featureRows.map((feature) => feature.id);
+  const [todosByFeature, ownersByFeature] = await Promise.all([
+    loadTodosByFeature(db, featureIds),
+    loadOwnersByFeature(db, featureIds),
+  ]);
 
   return {
     provider: project.provider,
@@ -153,9 +156,37 @@ export async function getProjectDetail(
       type: feature.type,
       severity: feature.severity,
       relatesTo: feature.relatesTo,
+      owners: ownersByFeature.get(feature.id) ?? [],
+      createdAt: feature.createdAt,
       todos: todosByFeature.get(feature.id) ?? [],
     })),
   };
+}
+
+async function loadOwnersByFeature(
+  db: Tx,
+  featureIds: string[],
+): Promise<Map<string, string[]>> {
+  const ownersByFeature = new Map<string, string[]>();
+  if (featureIds.length === 0) return ownersByFeature;
+
+  const ownerRows = await db
+    .select({
+      featureId: schema.featureAssignees.featureId,
+      owner: schema.assignees.handle,
+    })
+    .from(schema.featureAssignees)
+    .innerJoin(schema.assignees, eq(schema.featureAssignees.assigneeId, schema.assignees.id))
+    .where(inArray(schema.featureAssignees.featureId, featureIds))
+    .orderBy(schema.assignees.handle);
+
+  for (const row of ownerRows) {
+    const list = ownersByFeature.get(row.featureId) ?? [];
+    list.push(row.owner);
+    ownersByFeature.set(row.featureId, list);
+  }
+
+  return ownersByFeature;
 }
 
 async function loadTodosByFeature(

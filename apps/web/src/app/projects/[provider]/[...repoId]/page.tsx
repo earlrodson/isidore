@@ -7,8 +7,7 @@ import {
 } from "@isidore/db";
 import { getDb } from "@/lib/db";
 import { formatDrift, formatHours } from "@/lib/format";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { FeatureFilters } from "@/components/features/feature-filters";
 import {
   Table,
   TableBody,
@@ -22,12 +21,6 @@ export const dynamic = "force-dynamic";
 
 interface ProjectDetailPageProps {
   params: Promise<{ provider: string; repoId: string[] }>;
-}
-
-function statusBadgeVariant(status: string): "success" | "destructive" | "secondary" {
-  if (status === "done") return "success";
-  if (status === "blocked") return "destructive";
-  return "secondary";
 }
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
@@ -51,48 +44,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">{project.name}</h1>
 
       {project.features.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No features pushed yet.</p>
+        <p className="mb-10 text-sm text-muted-foreground">No features pushed yet.</p>
       ) : (
-        <div className="mb-10 flex flex-col gap-4">
-          {project.features.map((feature) => (
-            <Card key={feature.featureId}>
-              <CardHeader>
-                <CardTitle className="flex flex-wrap items-center gap-2 text-base">
-                  {feature.type && <Badge variant="outline">{feature.type}</Badge>}
-                  <span>{feature.title}</span>
-                  <Badge variant={statusBadgeVariant(feature.status)}>{feature.status}</Badge>
-                  <Badge variant="secondary">{feature.environment ?? "unknown"}</Badge>
-                  {feature.severity && <Badge variant="destructive">{feature.severity}</Badge>}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-2 text-sm">
-                <p className="text-muted-foreground">
-                  Hours logged: {formatHours(feature.hoursLogged)} /{" "}
-                  {formatHours(feature.estimateHours)}
-                </p>
-                <p className="text-muted-foreground">
-                  Open PRs: {Array.isArray(feature.openPrs) ? feature.openPrs.length : 0}
-                </p>
-                {Array.isArray(feature.relatesTo) && feature.relatesTo.length > 0 ? (
-                  <p className="text-muted-foreground">
-                    Relates to: {(feature.relatesTo as string[]).join(", ")}
-                  </p>
-                ) : null}
-                <ul className="flex flex-col gap-1">
-                  {feature.todos.map((todo) => (
-                    <li key={todo.todoId} className="flex items-center gap-2">
-                      <input type="checkbox" checked={todo.done} readOnly className="accent-primary" />
-                      <span className={todo.done ? "text-muted-foreground line-through" : undefined}>
-                        {todo.title} (@{todo.owner}
-                        {todo.due ? `, due ${todo.due}` : ""})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <FeatureFilters features={project.features} />
       )}
 
       <h2 className="mb-3 text-lg font-semibold tracking-tight">Completed per week</h2>
