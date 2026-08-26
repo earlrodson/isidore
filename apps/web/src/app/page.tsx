@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 // Server-fetched on every request — data changes a few times a day
 // (TECHSTACK.md §4.1), so there is no benefit to static generation here.
@@ -83,7 +84,12 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Isidore</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Isidore</h1>
+        <Button asChild size="sm">
+          <Link href="/onboarding">Connect a repo</Link>
+        </Button>
+      </div>
 
       <Tabs defaultValue="projects">
         <TabsList>
@@ -95,7 +101,13 @@ export default async function HomePage() {
 
         <TabsContent value="projects">
           {projects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No projects onboarded yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No projects onboarded yet.{" "}
+              <Link href="/onboarding" className="font-medium underline">
+                Connect a repo
+              </Link>{" "}
+              to get started.
+            </p>
           ) : (
             <Table>
               <TableHeader>
