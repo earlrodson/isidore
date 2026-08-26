@@ -88,10 +88,14 @@ export class FeatureFileParseError extends Error {
  * GUIDELINES.md and TEMPLATE-*.md per GUIDELINES.md "Report tooling notes"
  * — those carry placeholder frontmatter, not real items — and any non-`.md`
  * file, since `isi init` scaffolds `.isidore-templates.json` alongside them.
+ * Both may carry a leading digit sort-order prefix (e.g. `1GUIDELINES.md`,
+ * `2TEMPLATE-feature.md`), so the exclusion strips that before matching.
  */
 export function isFeatureFile(filename: string): boolean {
   const base = filename.split("/").pop() ?? filename;
-  return base.endsWith(".md") && base !== "GUIDELINES.md" && !base.startsWith("TEMPLATE-");
+  if (!base.endsWith(".md")) return false;
+  const unprefixed = base.replace(/^\d+/, "");
+  return unprefixed !== "GUIDELINES.md" && !unprefixed.startsWith("TEMPLATE-");
 }
 
 function findSection(body: string, heading: string): string | null {

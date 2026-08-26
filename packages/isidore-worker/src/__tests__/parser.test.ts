@@ -24,6 +24,13 @@ describe("isFeatureFile", () => {
     expect(isFeatureFile("TEMPLATE-defect.md")).toBe(false);
   });
 
+  it("excludes GUIDELINES.md and TEMPLATE-*.md with a leading sort-order digit", () => {
+    expect(isFeatureFile("1GUIDELINES.md")).toBe(false);
+    expect(isFeatureFile("docs/specifications/1GUIDELINES.md")).toBe(false);
+    expect(isFeatureFile("2TEMPLATE-feature.md")).toBe(false);
+    expect(isFeatureFile("6TEMPLATE-defect.md")).toBe(false);
+  });
+
   it("includes a real item file", () => {
     expect(isFeatureFile("ingest-endpoint-hmac.md")).toBe(true);
     expect(isFeatureFile("docs/specifications/ingest-endpoint-hmac.md")).toBe(true);
