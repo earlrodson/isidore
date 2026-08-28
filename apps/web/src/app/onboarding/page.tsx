@@ -15,6 +15,26 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 export const dynamic = "force-dynamic";
 
+function StepHeading({
+  step,
+  title,
+  optional,
+}: {
+  step: number;
+  title: string;
+  optional?: boolean;
+}) {
+  return (
+    <div className="mb-2 flex items-center gap-2">
+      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+        {step}
+      </span>
+      <span className="text-sm font-medium">{title}</span>
+      {optional && <span className="text-xs text-muted-foreground">(optional)</span>}
+    </div>
+  );
+}
+
 interface OnboardingPageProps {
   searchParams: Promise<{
     scaffolded?: string;
@@ -117,82 +137,102 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                         : ciSnippet;
                       return (
                         <li key={repo.id} className="rounded-md border border-border p-4">
-                          <p className="mb-3 font-medium">{repo.fullName}</p>
+                          <p className="mb-4 font-medium">{repo.fullName}</p>
 
-                          <div className="flex flex-wrap gap-3">
-                            <form action="/api/onboarding/scaffold" method="POST" className="flex items-end gap-2">
-                              <input type="hidden" name="owner" value={owner} />
-                              <input type="hidden" name="repo" value={repoName} />
-                              <div className="flex flex-col gap-1">
-                                <Label htmlFor={`path-${repo.id}`}>Folder</Label>
-                                <Input
-                                  id={`path-${repo.id}`}
-                                  type="text"
-                                  name="path"
-                                  defaultValue="docs/specifications"
-                                />
-                              </div>
-                              <Button type="submit" size="sm">
-                                Scaffold docs/specifications/
-                              </Button>
-                            </form>
+                          <div className="flex flex-col gap-5">
+                            <div>
+                              <StepHeading step={1} title="Scaffold docs/specifications/" />
+                              <form
+                                action="/api/onboarding/scaffold"
+                                method="POST"
+                                className="flex flex-wrap items-end gap-2"
+                              >
+                                <input type="hidden" name="owner" value={owner} />
+                                <input type="hidden" name="repo" value={repoName} />
+                                <div className="flex flex-col gap-1">
+                                  <Label htmlFor={`path-${repo.id}`}>Folder</Label>
+                                  <Input
+                                    id={`path-${repo.id}`}
+                                    type="text"
+                                    name="path"
+                                    defaultValue="docs/specifications"
+                                  />
+                                </div>
+                                <Button type="submit" size="sm">
+                                  Scaffold docs/specifications/
+                                </Button>
+                              </form>
+                            </div>
 
-                            <form action="/api/onboarding/secret" method="POST" className="flex items-end">
-                              <input type="hidden" name="owner" value={owner} />
-                              <input type="hidden" name="repo" value={repoName} />
-                              <Button type="submit" variant="secondary" size="sm">
-                                Generate/rotate ingest secret
-                              </Button>
-                            </form>
+                            <div>
+                              <StepHeading step={2} title="Generate an ingest secret" />
+                              <form action="/api/onboarding/secret" method="POST" className="flex items-end">
+                                <input type="hidden" name="owner" value={owner} />
+                                <input type="hidden" name="repo" value={repoName} />
+                                <Button type="submit" variant="secondary" size="sm">
+                                  Generate/rotate ingest secret
+                                </Button>
+                              </form>
+                            </div>
+
+                            <div>
+                              <StepHeading
+                                step={3}
+                                title="Configure branch names"
+                                optional
+                              />
+                              <form method="GET" className="flex flex-wrap items-end gap-2">
+                                <input type="hidden" name="configuredOwner" value={owner} />
+                                <input type="hidden" name="configuredRepo" value={repoName} />
+                                <div className="flex flex-col gap-1">
+                                  <Label htmlFor={`staging-${repo.id}`}>Staging branch</Label>
+                                  <Input
+                                    id={`staging-${repo.id}`}
+                                    type="text"
+                                    name="stagingBranch"
+                                    placeholder="staging"
+                                    defaultValue={isConfiguredRepo ? params.stagingBranch : undefined}
+                                  />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <Label htmlFor={`production-${repo.id}`}>Production branch</Label>
+                                  <Input
+                                    id={`production-${repo.id}`}
+                                    type="text"
+                                    name="productionBranch"
+                                    placeholder="main"
+                                    defaultValue={isConfiguredRepo ? params.productionBranch : undefined}
+                                  />
+                                </div>
+                                <Button type="submit" variant="outline" size="sm">
+                                  Update CI snippet branch names
+                                </Button>
+                              </form>
+                            </div>
+
+                            <div>
+                              <StepHeading step={4} title="Add the CI workflow to your repo" />
+                              <Collapsible>
+                                <CollapsibleTrigger asChild>
+                                  <Button type="button" variant="ghost" size="sm">
+                                    CI snippet (.github/workflows/isidore-worker.yml)
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent>
+                                  <p className="mt-2 text-sm text-muted-foreground">
+                                    Still builds isidore-worker from source in your job — see AC-006 in
+                                    docs/specifications/onboarding-oauth.md. Fill in the secret from step
+                                    2 above as the <code>ISIDORE_HMAC_SECRET</code> repo secret. Leave the
+                                    branch names in step 3 blank to use the worker&apos;s defaults
+                                    (staging / main, falling back to master).
+                                  </p>
+                                  <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-muted p-3 text-xs">
+                                    {snippet}
+                                  </pre>
+                                </CollapsibleContent>
+                              </Collapsible>
+                            </div>
                           </div>
-
-                          <form method="GET" className="mt-3 flex flex-wrap items-end gap-2">
-                            <input type="hidden" name="configuredOwner" value={owner} />
-                            <input type="hidden" name="configuredRepo" value={repoName} />
-                            <div className="flex flex-col gap-1">
-                              <Label htmlFor={`staging-${repo.id}`}>Staging branch</Label>
-                              <Input
-                                id={`staging-${repo.id}`}
-                                type="text"
-                                name="stagingBranch"
-                                placeholder="staging"
-                                defaultValue={isConfiguredRepo ? params.stagingBranch : undefined}
-                              />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <Label htmlFor={`production-${repo.id}`}>Production branch</Label>
-                              <Input
-                                id={`production-${repo.id}`}
-                                type="text"
-                                name="productionBranch"
-                                placeholder="main"
-                                defaultValue={isConfiguredRepo ? params.productionBranch : undefined}
-                              />
-                            </div>
-                            <Button type="submit" variant="outline" size="sm">
-                              Update CI snippet branch names
-                            </Button>
-                          </form>
-
-                          <Collapsible className="mt-3">
-                            <CollapsibleTrigger asChild>
-                              <Button type="button" variant="ghost" size="sm">
-                                CI snippet (.github/workflows/isidore-worker.yml)
-                              </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <p className="mt-2 text-sm text-muted-foreground">
-                                Still builds isidore-worker from source in your job — see AC-006 in
-                                docs/specifications/onboarding-oauth.md. Fill in the secret from the
-                                button above as the <code>ISIDORE_HMAC_SECRET</code> repo secret.
-                                Leave the branch names above blank to use the worker&apos;s defaults
-                                (staging / main, falling back to master).
-                              </p>
-                              <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-muted p-3 text-xs">
-                                {snippet}
-                              </pre>
-                            </CollapsibleContent>
-                          </Collapsible>
                         </li>
                       );
                     })}
