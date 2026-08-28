@@ -4,6 +4,7 @@ import {
   githubAppSlug,
   githubAuthorizeUrl,
   listUserInstallations,
+  repoFileExists,
 } from "../github-app.js";
 
 describe("githubAuthorizeUrl", () => {
@@ -80,6 +81,34 @@ describe("listUserInstallations", () => {
   it("throws when GitHub returns a non-ok status", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 401 }));
     await expect(listUserInstallations("token")).rejects.toThrow("401");
+  });
+});
+
+describe("repoFileExists", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("returns false on a 404", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 404 }));
+    expect(
+      await repoFileExists("token", {
+        owner: "acme",
+        repo: "widgets",
+        filePath: ".github/workflows/isidore-worker.yml",
+      }),
+    ).toBe(false);
+  });
+
+  it("returns true when the file is found", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200 }));
+    expect(
+      await repoFileExists("token", {
+        owner: "acme",
+        repo: "widgets",
+        filePath: ".github/workflows/isidore-worker.yml",
+      }),
+    ).toBe(true);
   });
 });
 

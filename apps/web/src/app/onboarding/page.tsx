@@ -141,46 +141,12 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
 
                           <div className="flex flex-col gap-5">
                             <div>
-                              <StepHeading step={1} title="Scaffold docs/specifications/" />
-                              <form
-                                action="/api/onboarding/scaffold"
-                                method="POST"
-                                className="flex flex-wrap items-end gap-2"
-                              >
-                                <input type="hidden" name="owner" value={owner} />
-                                <input type="hidden" name="repo" value={repoName} />
-                                <div className="flex flex-col gap-1">
-                                  <Label htmlFor={`path-${repo.id}`}>Folder</Label>
-                                  <Input
-                                    id={`path-${repo.id}`}
-                                    type="text"
-                                    name="path"
-                                    defaultValue="docs/specifications"
-                                  />
-                                </div>
-                                <Button type="submit" size="sm">
-                                  Scaffold docs/specifications/
-                                </Button>
-                              </form>
-                            </div>
-
-                            <div>
-                              <StepHeading step={2} title="Generate an ingest secret" />
-                              <form action="/api/onboarding/secret" method="POST" className="flex items-end">
-                                <input type="hidden" name="owner" value={owner} />
-                                <input type="hidden" name="repo" value={repoName} />
-                                <Button type="submit" variant="secondary" size="sm">
-                                  Generate/rotate ingest secret
-                                </Button>
-                              </form>
-                            </div>
-
-                            <div>
-                              <StepHeading
-                                step={3}
-                                title="Configure branch names"
-                                optional
-                              />
+                              <StepHeading step={1} title="Configure branch names" optional />
+                              <p className="mb-2 text-xs text-muted-foreground">
+                                Defaults to staging/main. Set this before step 2 if your repo uses
+                                different branch names — it&apos;s baked into the CI workflow that
+                                step 2 generates.
+                              </p>
                               <form method="GET" className="flex flex-wrap items-end gap-2">
                                 <input type="hidden" name="configuredOwner" value={owner} />
                                 <input type="hidden" name="configuredRepo" value={repoName} />
@@ -211,7 +177,60 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                             </div>
 
                             <div>
-                              <StepHeading step={4} title="Add the CI workflow to your repo" />
+                              <StepHeading
+                                step={2}
+                                title="Scaffold docs/specifications/ + CI workflow"
+                              />
+                              <p className="mb-2 text-xs text-muted-foreground">
+                                Opens a PR with the docs/specifications/ guardrail files, plus
+                                .github/workflows/isidore-worker.yml if your repo doesn&apos;t
+                                already have one.
+                              </p>
+                              <form
+                                action="/api/onboarding/scaffold"
+                                method="POST"
+                                className="flex flex-wrap items-end gap-2"
+                              >
+                                <input type="hidden" name="owner" value={owner} />
+                                <input type="hidden" name="repo" value={repoName} />
+                                <input
+                                  type="hidden"
+                                  name="stagingBranch"
+                                  value={isConfiguredRepo ? (params.stagingBranch ?? "") : ""}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="productionBranch"
+                                  value={isConfiguredRepo ? (params.productionBranch ?? "") : ""}
+                                />
+                                <div className="flex flex-col gap-1">
+                                  <Label htmlFor={`path-${repo.id}`}>Folder</Label>
+                                  <Input
+                                    id={`path-${repo.id}`}
+                                    type="text"
+                                    name="path"
+                                    defaultValue="docs/specifications"
+                                  />
+                                </div>
+                                <Button type="submit" size="sm">
+                                  Scaffold docs/specifications/
+                                </Button>
+                              </form>
+                            </div>
+
+                            <div>
+                              <StepHeading step={3} title="Generate an ingest secret" />
+                              <form action="/api/onboarding/secret" method="POST" className="flex items-end">
+                                <input type="hidden" name="owner" value={owner} />
+                                <input type="hidden" name="repo" value={repoName} />
+                                <Button type="submit" variant="secondary" size="sm">
+                                  Generate/rotate ingest secret
+                                </Button>
+                              </form>
+                            </div>
+
+                            <div>
+                              <StepHeading step={4} title="Add the secret, then merge the PR" />
                               <Collapsible>
                                 <CollapsibleTrigger asChild>
                                   <Button type="button" variant="ghost" size="sm">
@@ -220,10 +239,13 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
                                 </CollapsibleTrigger>
                                 <CollapsibleContent>
                                   <p className="mt-2 text-sm text-muted-foreground">
-                                    Still builds isidore-worker from source in your job — see AC-006 in
-                                    docs/specifications/onboarding-oauth.md. Fill in the secret from step
-                                    2 above as the <code>ISIDORE_HMAC_SECRET</code> repo secret. Leave the
-                                    branch names in step 3 blank to use the worker&apos;s defaults
+                                    For reference — step 2 already commits this to the PR when the
+                                    repo doesn&apos;t have it yet, so you shouldn&apos;t need to paste
+                                    it in by hand. Still builds isidore-worker from source in your
+                                    job — see AC-006 in docs/specifications/onboarding-oauth.md. Fill
+                                    in the secret from step
+                                    3 above as the <code>ISIDORE_HMAC_SECRET</code> repo secret. Leave the
+                                    branch names in step 1 blank to use the worker&apos;s defaults
                                     (staging / main, falling back to master).
                                   </p>
                                   <pre className="mt-2 overflow-x-auto rounded-md border border-border bg-muted p-3 text-xs">
