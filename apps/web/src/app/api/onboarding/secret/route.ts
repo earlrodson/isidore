@@ -19,7 +19,7 @@ function escapeHtml(value: string): string {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.redirect(new URL("/api/auth/github/login", request.url));
+    return NextResponse.redirect(new URL("/api/auth/github/login", request.url), 303);
   }
 
   const form = await request.formData();

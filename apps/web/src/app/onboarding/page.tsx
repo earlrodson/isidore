@@ -40,6 +40,8 @@ interface OnboardingPageProps {
     scaffolded?: string;
     pr?: string;
     error?: string;
+    scaffoldOwner?: string;
+    scaffoldRepo?: string;
     configuredOwner?: string;
     configuredRepo?: string;
     stagingBranch?: string;
@@ -85,7 +87,11 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         {params.pr && (
           <Alert variant="success">
             <AlertDescription>
-              Scaffold PR opened:{" "}
+              Scaffold PR opened for{" "}
+              <span className="font-medium">
+                {params.scaffoldOwner}/{params.scaffoldRepo}
+              </span>
+              :{" "}
               <a href={params.pr} className="font-medium underline">
                 {params.pr}
               </a>
@@ -94,12 +100,24 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
         )}
         {params.scaffolded === "exists" && (
           <Alert>
-            <AlertDescription>docs/specifications/ already exists in that repo.</AlertDescription>
+            <AlertDescription>
+              docs/specifications/ already exists in{" "}
+              <span className="font-medium">
+                {params.scaffoldOwner}/{params.scaffoldRepo}
+              </span>
+              .
+            </AlertDescription>
           </Alert>
         )}
         {params.error && (
           <Alert variant="destructive">
-            <AlertDescription>Error: {params.error}</AlertDescription>
+            <AlertDescription>
+              Error scaffolding{" "}
+              <span className="font-medium">
+                {params.scaffoldOwner}/{params.scaffoldRepo}
+              </span>
+              : {params.error}
+            </AlertDescription>
           </Alert>
         )}
       </div>

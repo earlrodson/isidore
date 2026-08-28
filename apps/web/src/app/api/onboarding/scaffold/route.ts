@@ -18,7 +18,7 @@ const WORKFLOW_PATH = ".github/workflows/isidore-worker.yml";
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.redirect(new URL("/api/auth/github/login", request.url));
+    return NextResponse.redirect(new URL("/api/auth/github/login", request.url), 303);
   }
 
   const form = await request.formData();
@@ -44,7 +44,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (await featuresFolderExists(accessToken, { owner, repo, path: normalizedPath })) {
       const url = new URL("/onboarding", request.url);
       url.searchParams.set("scaffolded", "exists");
-      return NextResponse.redirect(url);
+      url.searchParams.set("scaffoldOwner", owner);
+      url.searchParams.set("scaffoldRepo", repo);
+      return NextResponse.redirect(url, 303);
     }
 
     const files = readCanonicalTemplateFiles();
@@ -76,10 +78,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const url = new URL("/onboarding", request.url);
     url.searchParams.set("pr", pullRequestUrl);
-    return NextResponse.redirect(url);
+    url.searchParams.set("scaffoldOwner", owner);
+    url.searchParams.set("scaffoldRepo", repo);
+    return NextResponse.redirect(url, 303);
   } catch (error) {
     const url = new URL("/onboarding", request.url);
     url.searchParams.set("error", error instanceof Error ? error.message : "scaffold failed");
-    return NextResponse.redirect(url);
+    url.searchParams.set("scaffoldOwner", owner);
+    url.searchParams.set("scaffoldRepo", repo);
+    return NextResponse.redirect(url, 303);
   }
 }
