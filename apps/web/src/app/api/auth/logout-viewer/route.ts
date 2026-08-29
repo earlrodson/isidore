@@ -12,5 +12,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   await clearViewerSessionCookie();
 
-  return NextResponse.redirect(new URL("/login", request.url));
+  // 303, not the default 307: this is a POST request, and 307 would make
+  // the browser re-POST to /login, which has no POST handler.
+  return NextResponse.redirect(new URL("/login", request.url), 303);
 }

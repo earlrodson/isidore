@@ -10,5 +10,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
   await clearSessionCookie();
 
-  return NextResponse.redirect(new URL("/", request.url));
+  // 303, not the default 307: the request that triggered this is a POST
+  // (native form submit), and 307 would make the browser re-POST to "/",
+  // which has no POST handler.
+  return NextResponse.redirect(new URL("/", request.url), 303);
 }
