@@ -86,9 +86,16 @@ export default async function HomePage() {
     <main className="mx-auto max-w-5xl px-6 py-10">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Isidore</h1>
-        <Button asChild size="sm">
-          <Link href="/onboarding">Connect a repo</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm">
+            <Link href="/onboarding">Connect a repo</Link>
+          </Button>
+          <form action="/api/auth/logout" method="POST">
+            <Button type="submit" size="sm" variant="outline">
+              Log out
+            </Button>
+          </form>
+        </div>
       </div>
 
       <Tabs defaultValue="projects">
