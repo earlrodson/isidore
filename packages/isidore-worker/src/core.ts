@@ -77,13 +77,19 @@ export async function buildSnapshot(params: BuildSnapshotParams): Promise<Ingest
   const loadFeatures = params.loadFeatures ?? loadFeatureFiles;
 
   const sources = loadFeatures(params.featuresDir);
-  const parsed = sources.map(({ filename, content }) => {
+  const parsed: Array<ReturnType<typeof parseFeatureFile>> = [];
+  for (const { filename, content } of sources) {
     try {
-      return parseFeatureFile(content);
+      parsed.push(parseFeatureFile(content));
     } catch (error) {
-      throw new Error(`Failed to parse ${filename}: ${(error as Error).message}`);
+      // One malformed doc must never block every other feature's snapshot
+      // from reaching Isidore — skip and warn instead of throwing (same
+      // "warn never block" contract as the lint step in isidore-worker.yml).
+      console.warn(
+        `isidore-worker: skipping ${filename} — failed to parse: ${(error as Error).message}`,
+      );
     }
-  });
+  }
 
   const featureIds = parsed.map((file) => file.frontmatter.id);
   const gitApiParams = {

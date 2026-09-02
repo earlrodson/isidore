@@ -54,14 +54,22 @@ describe("buildEnvironmentPing", () => {
     expect(payload.environment_ping_schema_version).toBe("1.0");
   });
 
-  it("throws a descriptive error when a spec file fails to parse", () => {
-    expect(() =>
-      buildEnvironmentPing({
-        ...baseParams,
-        cwd: process.cwd(),
-        loadFeatures: () => [{ filename: "broken.md", content: "not frontmatter" }],
-      }),
-    ).toThrow(/Failed to parse broken\.md/);
+  it("skips a malformed spec file and warns, without dropping the rest of the ping", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const payload = buildEnvironmentPing({
+      ...baseParams,
+      cwd: process.cwd(),
+      loadFeatures: () => [
+        { filename: "broken.md", content: "not frontmatter" },
+        { filename: "auth-refresh.md", content: stagingCopy },
+      ],
+    });
+
+    expect(payload.feature_ids).toEqual(["auth-refresh"]);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/skipping broken\.md.*failed to parse/));
+
+    warnSpy.mockRestore();
   });
 });
 

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { findStatusDrift, formatStatusDrift } from "../lint.js";
 
 const fixture = (name: string) =>
@@ -77,6 +77,33 @@ describe("findStatusDrift", () => {
     });
 
     expect(drifted).toEqual([]);
+  });
+
+  it("skips a malformed feature file and warns, without dropping drift checks on the rest", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const drifted = findStatusDrift({
+      featuresDir: "unused",
+      loadFeatures: () => [
+        { filename: "broken.md", content: "not a feature file" },
+        {
+          filename: "all-todos-done-status-stale.md",
+          content: fixture("all-todos-done-status-stale.md"),
+        },
+      ],
+    });
+
+    expect(drifted).toEqual([
+      {
+        id: "all-todos-done-status-stale",
+        title: "Fixture — every todo done but status never advanced",
+        status: "implementing",
+        filename: "all-todos-done-status-stale.md",
+      },
+    ]);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/skipping broken\.md.*failed to parse/));
+
+    warnSpy.mockRestore();
   });
 });
 

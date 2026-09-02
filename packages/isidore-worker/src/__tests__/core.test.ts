@@ -129,14 +129,23 @@ describe("buildSnapshot", () => {
     expect(payload.features[0].environment).toBeUndefined();
   });
 
-  it("throws a descriptive error when a feature file fails to parse", async () => {
-    await expect(
-      buildSnapshot({
-        ...baseParams,
-        cwd: process.cwd(),
-        loadFeatures: () => [{ filename: "broken.md", content: "not a feature file" }],
-      }),
-    ).rejects.toThrow(/Failed to parse broken\.md/);
+  it("skips a malformed feature file and warns, without dropping the rest of the snapshot", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const payload = await buildSnapshot({
+      ...baseParams,
+      cwd: process.cwd(),
+      loadFeatures: () => [
+        { filename: "broken.md", content: "not a feature file" },
+        { filename: "auth-refresh.md", content: featureFileContent },
+      ],
+    });
+
+    expect(payload.features).toHaveLength(1);
+    expect(payload.features[0].feature_id).toBe("auth-refresh");
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/skipping broken\.md.*failed to parse/));
+
+    warnSpy.mockRestore();
   });
 });
 

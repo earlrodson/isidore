@@ -37,13 +37,19 @@ export function buildEnvironmentPing(
   const loadFeatures = params.loadFeatures ?? loadFeatureFiles;
 
   const sources = loadFeatures(params.featuresDir);
-  const featureIds = sources.map(({ filename, content }) => {
+  const featureIds: string[] = [];
+  for (const { filename, content } of sources) {
     try {
-      return parseFeatureFile(content).frontmatter.id;
+      featureIds.push(parseFeatureFile(content).frontmatter.id);
     } catch (error) {
-      throw new Error(`Failed to parse ${filename}: ${(error as Error).message}`);
+      // Same "warn never block" contract as buildSnapshot (core.ts) — one
+      // malformed doc must never stop the environment ping for every
+      // other feature.
+      console.warn(
+        `isidore-worker: skipping ${filename} — failed to parse: ${(error as Error).message}`,
+      );
     }
-  });
+  }
 
   return parseEnvironmentPingPayload({
     environment_ping_schema_version: "1.0",

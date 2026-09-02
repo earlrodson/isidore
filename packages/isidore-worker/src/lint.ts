@@ -42,7 +42,12 @@ export function findStatusDrift(params: FindStatusDriftParams): StatusDriftItem[
     try {
       parsed = parseFeatureFile(content);
     } catch (error) {
-      throw new Error(`Failed to parse ${filename}: ${(error as Error).message}`);
+      // Same "warn never block" contract as buildSnapshot (core.ts) — one
+      // malformed doc must never stop drift-checking every other feature.
+      console.warn(
+        `isidore-worker: skipping ${filename} — failed to parse: ${(error as Error).message}`,
+      );
+      continue;
     }
 
     const { frontmatter, todos } = parsed;
