@@ -249,7 +249,7 @@ export default async function OnboardingPage({ searchParams }: OnboardingPagePro
 
                             <div>
                               <StepHeading step={4} title="Add the secret, then merge the PR" />
-                              <Collapsible>
+                              <Collapsible defaultOpen={isConfiguredRepo}>
                                 <CollapsibleTrigger asChild>
                                   <Button type="button" variant="ghost" size="sm">
                                     CI snippet (.github/workflows/isidore-worker.yml)

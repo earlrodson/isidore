@@ -5,6 +5,7 @@ import {
   githubAuthorizeUrl,
   listUserInstallations,
   repoFileExists,
+  scaffoldFeaturesFolderAsPullRequest,
 } from "../github-app.js";
 
 describe("githubAuthorizeUrl", () => {
@@ -136,5 +137,37 @@ describe("featuresFolderExists", () => {
     await expect(
       featuresFolderExists("token", { owner: "acme", repo: "widgets", path: "docs/specifications" }),
     ).rejects.toThrow("500");
+  });
+});
+
+describe("scaffoldFeaturesFolderAsPullRequest", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("surfaces an actionable error when the workflow file commit 403s", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        // repo lookup (default branch)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ default_branch: "main" }) })
+        // ref lookup (head sha)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ object: { sha: "abc123" } }) })
+        // branch create
+        .mockResolvedValueOnce({ ok: true })
+        // workflow file commit
+        .mockResolvedValueOnce({ ok: false, status: 403 }),
+    );
+
+    await expect(
+      scaffoldFeaturesFolderAsPullRequest("token", {
+        owner: "acme",
+        repo: "widgets",
+        path: "docs/specifications",
+        files: [],
+        extraFiles: [{ path: ".github/workflows/isidore-worker.yml", content: "on: push" }],
+      }),
+    ).rejects.toThrow(/Workflows.*repository permission/);
   });
 });

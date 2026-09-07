@@ -285,6 +285,14 @@ export async function scaffoldFeaturesFolderAsPullRequest(
       },
     );
     if (!commitResponse.ok) {
+      if (commitResponse.status === 403 && filePath.startsWith(".github/workflows/")) {
+        throw new Error(
+          `GitHub commit of ${filePath} failed: 403. The Isidore GitHub App is missing the ` +
+            `"Workflows" repository permission, which is required (separately from "Contents") ` +
+            `to write files under .github/workflows/. Grant that permission in the app's ` +
+            `settings, then reinstall/re-approve it on ${owner}/${repo} and retry onboarding.`,
+        );
+      }
       throw new Error(`GitHub commit of ${filePath} failed: ${commitResponse.status}`);
     }
   }
